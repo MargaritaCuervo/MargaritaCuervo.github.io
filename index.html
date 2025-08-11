@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Página web de Margarita Cuervo</title>
+    <style>
+      /* Reset básico */
+      body,
+      ul,
+      li,
+      h1,
+      nav,
+      a,
+      button {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+      body {
+        background: #fafafa;
+        color: #222;
+      }
+      header {
+        background: white;
+        display: flex;
+        align-items: center;
+        padding: 1rem 2rem;
+        justify-content: space-between;
+        box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
+      }
+      header h1 {
+        font-weight: 600;
+        font-size: 1.5rem;
+        color: #222;
+      }
+      nav ul {
+        list-style: none;
+        display: flex;
+        gap: 1.5rem;
+      }
+      nav a {
+        text-decoration: none;
+        color: #222;
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+      nav a:hover,
+      nav a.active {
+        color: #0066cc;
+        border-bottom: 2px solid #0066cc;
+        padding-bottom: 2px;
+      }
+      button.cta {
+        background: #0066cc;
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.3s ease;
+      }
+      button.cta:hover {
+        background: #004a99;
+      }
+      main {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      main h2 {
+        font-weight: 600;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        text-align: center;
+      }
+      ul.tasks-list {
+        list-style: none;
+        padding: 0;
+      }
+      ul.tasks-list li {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 5px rgb(0 0 0 / 0.1);
+        transition: box-shadow 0.3s ease;
+      }
+      ul.tasks-list li:hover {
+        box-shadow: 0 4px 15px rgb(0 0 0 / 0.2);
+      }
+      ul.tasks-list a {
+        text-decoration: none;
+        color: #0066cc;
+        font-weight: 600;
+      }
+      ul.tasks-list a:hover {
+        text-decoration: underline;
+      }
+      small {
+        display: block;
+        margin-top: 0.3rem;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Margarita Cuervo - 581771</h1>
+      <nav>
+        <ul>
+          <li><a href="#" class="active">Inicio</a></li>
+          <li><a href="#ejerciciosguiados">Ejercicios Guiados</a></li>
+          <li><a href="#tareas">Tareas</a></li>
+          <li><a href="#proyectos">Proyectos</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <section id="intro">
+        <h2>Bienvenid@ a mi página web</h2>
+        <p
+          style="
+            text-align: center;
+            max-width: 600px;
+            margin: auto;
+            color: #444;
+          "
+        >
+          Aquí encontrarás todos los ejercicios guiados y las tareas organizadas
+          de la materia de integración de aplicaciones computacionales.
+          Puedes navegar por cada una para ver documentos, código y entregables.
+        </p>
+      </section>
+
+      <section id="ejerciciosguiados" style="margin-top: 3rem">
+        <h2>Lista de Ejercicios Guiados</h2>
+        <ul class="tasks-list">
+          <li>
+              Ejercicio Guiado 1: Aplicación CLI con Python para clasificar modelos
+            <small><a href="ejercicio1.html" target="_blank">Archivos</a></small>
+          </li>
+        </ul>
+      </section>
+      
+      <section id="tareas" style="margin-top: 3rem">
+        <h2>Lista de Tareas</h2>
+        <ul class="tasks-list">
+          <li>
+              Tarea 1: Mapa Conceptual Comparativo
+            <small
+              ><a href="docs/tareas/tarea1/tarea1.pdf" target="_blank"
+                >Documento PDF</a
+              ></small
+            >
+          </li>
+          </li>
+          <li>
+            Tarea 2: Miniensayo: ¿Cloud-native o cloud-enabled? Análisis de una app real
+            <small
+              ><a href="docs/tareas/tarea2/tarea2.pdf" target="_blank"
+                >Documento PDF</a>
+            </small>
+          </li>
+          <li>
+            Tarea 3: Ejercicio en Cursor con Prompt Engineering
+            <small><a href="tarea3.html" target="_blank">Archivos</a></small>
+          </li>
+        </ul>
+      </section>
+
+      <!--
+      <section id="proyectos" style="margin-top: 3rem">
+        <h2>Proyectos</h2>
+        <p style="text-align: center; color: #555">
+          (Sección para futuros proyectos o trabajos extra.)
+        </p>
+      </section>
+
+      <section id="contacto" style="margin-top: 3rem; text-align: center">
+        <h2>Contacto</h2>
+        <p>
+          Correo: <a href="mailto:tuemail@ejemplo.com">tuemail@ejemplo.com</a>
+        </p>
+      </section>
+      -->
+    </main>
+  </body>
+</html>
