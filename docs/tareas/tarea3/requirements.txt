@@ -1,0 +1,30 @@
+# 🏦 Dependencias para Backend Serverless de Banca Móvil
+# Arquitectura Híbrida con AWS Lambda
+
+# AWS SDK
+boto3>=1.26.0
+botocore>=1.29.0
+
+# JWT para autenticación
+PyJWT>=2.6.0
+cryptography>=3.4.8
+
+# Utilidades de fecha y tiempo
+python-dateutil>=2.8.2
+
+# Validación de datos
+pydantic>=1.10.0
+
+# Logging estructurado
+structlog>=22.3.0
+
+# Manejo de UUIDs
+uuid>=1.30
+
+# Para desarrollo local (no incluir en producción)
+# pytest>=7.0.0
+# pytest-mock>=3.8.0
+# moto>=4.0.0
+# black>=22.0.0
+# flake8>=5.0.0
+

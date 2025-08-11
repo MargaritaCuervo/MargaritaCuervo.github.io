@@ -1,0 +1,69 @@
+# 🚀 Configuración de despliegue para AWS SAM
+# Aplicación de Banca Móvil Serverless
+
+version = 0.1
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "banking-mobile-app"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-XXXXXXXXXXXX"
+s3_prefix = "banking-mobile-app"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=dev"
+image_repositories = []
+
+[default.build]
+[default.build.parameters]
+use_container = true
+cached = true
+parallel = true
+
+[default.local_start_api]
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+container_host = "localhost"
+container_port = 3000
+host = "127.0.0.1"
+port = 3000
+debug = true
+env_vars = "env.json"
+
+[default.local_start_lambda]
+[default.local_start_lambda.parameters]
+warm_containers = "EAGER"
+container_host = "localhost"
+container_port = 9001
+host = "127.0.0.1"
+port = 9001
+debug = true
+env_vars = "env.json"
+
+# Configuración para staging
+[staging]
+[staging.deploy]
+[staging.deploy.parameters]
+stack_name = "banking-mobile-app-staging"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-XXXXXXXXXXXX"
+s3_prefix = "banking-mobile-app-staging"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=staging"
+image_repositories = []
+
+# Configuración para producción
+[prod]
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name = "banking-mobile-app-prod"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-XXXXXXXXXXXX"
+s3_prefix = "banking-mobile-app-prod"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=prod"
+image_repositories = []
+
