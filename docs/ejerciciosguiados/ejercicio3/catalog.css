@@ -1,0 +1,51 @@
+/* Estilo general */
+catalog {
+    display: table;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    width: 100%;
+}
+
+/* Cada libro como fila */
+book {
+    display: table-row;
+    border: 1px solid #ddd;
+}
+
+/* Estilo para las celdas */
+book > * {
+    display: table-cell;
+    border: 1px solid #ccc;
+    padding: 8px;
+    vertical-align: top;
+}
+
+/* Cabecera automática usando el primer book */
+catalog::before {
+    display: table-header-group;
+    font-weight: bold;
+    background: #333;
+    color: #fff;
+    content: "ISBN | Título | Autor | Año | Género | Precio | Stock | Formato";
+    white-space: pre;
+}
+
+/* Zebra stripes */
+book:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+book:nth-child(odd) {
+    background-color: #fff;
+}
+
+/* ISBN como resaltado */
+book[isbn]::before {
+    content: attr(isbn);
+    display: table-cell;
+    font-weight: bold;
+    color: #2a5d9f;
+    padding: 8px;
+    border: 1px solid #ccc;
+}
