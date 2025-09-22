@@ -43,6 +43,54 @@
     a.back:hover {
       text-decoration: underline;
     }
+    .directory-tree {
+    font-family: monospace; /* Fuente de código para una apariencia limpia */
+    line-height: 1.5;
+    background-color: #f8f8f8;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    color: #444;
+}
+
+.directory-tree ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    margin-left: 20px; /* Indentación para las carpetas */
+}
+
+.directory-tree li {
+    position: relative;
+    padding-left: 10px;
+}
+
+/* Pseudo-elementos para las líneas y los iconos de carpeta */
+.directory-tree ul li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -10px;
+    width: 15px;
+    height: 100%;
+    border-left: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+}
+
+.directory-tree ul li:last-child::before {
+    height: 15px;
+    border-left: none;
+}
+
+.directory-tree span.folder::before {
+    content: '📁'; /* Ícono de carpeta */
+    margin-right: 5px;
+}
+
+.directory-tree span.file::before {
+    content: '📄'; /* Ícono de archivo */
+    margin-right: 5px;
+}
   </style>
 </head>
 <body>
