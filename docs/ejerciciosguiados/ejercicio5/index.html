@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cliente de Microservicio de Libros</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+      /* Fallback por si tu style.css no define .hidden */
+      .hidden { display:none; }
+      /* Opcional: cuadritos de tokens */
+      .kpis { display:flex; gap:10px; flex-wrap:wrap; margin:10px 0; }
+      .kpi { background:#f1f5ff; border:1px solid #dfe7ff; border-radius:10px; padding:8px 10px; font-size:12px; }
+      .toolbar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+      small.muted { color:#555; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cliente de Microservicio de Libros</h1>
+
+        <div class="auth-section">
+            <h2>Autenticación</h2>
+            <form id="login-form">
+                <input type="text" id="username" placeholder="Usuario" required>
+                <input type="password" id="password" placeholder="Contraseña" required>
+                <button type="submit">Iniciar Sesión</button>
+            </form>
+            <hr>
+            <h2>Registrar Nuevo Usuario</h2>
+            <form id="register-form">
+                <input type="text" id="reg-username" placeholder="Nuevo Usuario" required>
+                <input type="password" id="reg-password" placeholder="Nueva Contraseña" required>
+                <button type="submit">Registrar</button>
+            </form>
+        </div>
+
+        <div class="app-section hidden" id="app-section">
+            <!-- Toolbar NUEVA -->
+            <div class="toolbar">
+              <button id="get-books">Obtener Todos los Libros</button>
+              <button id="status-btn" type="button">Estado de Autenticación</button>
+              <button id="logout-btn" type="button">Logout</button>
+            </div>
+
+            <!-- KPIs de tokens (abreviados) -->
+            <div class="kpis">
+              <div class="kpi">
+                <strong>Access:</strong>
+                <div><small class="muted" id="kpi-access">—</small></div>
+              </div>
+              <div class="kpi">
+                <strong>Refresh:</strong>
+                <div><small class="muted" id="kpi-refresh">—</small></div>
+              </div>
+            </div>
+
+            <div class="section-container">
+                <div class="form-section">
+                    <h3>Catálogo de Libros</h3>
+                    <!-- (el botón de obtener libros también está en la toolbar para acceso rápido) -->
+                    <div id="books-container"></div>
+                    <hr>
+
+                    <h3>Buscar por ISBN</h3>
+                    <form id="search-isbn-form" class="search-form">
+                        <input type="text" id="isbn-search" placeholder="ISBN del libro" required>
+                        <button type="submit">Buscar por ISBN</button>
+                    </form>
+                    
+                    <h3>Buscar por autor</h3>
+                    <form id="search-author-form" class="search-form">
+                        <input type="text" id="author-search" placeholder="Nombre del autor" required>
+                        <button type="submit">Buscar por Autor</button>
+                    </form>
+                    
+                    <h3>Buscar por formato</h3>
+                    <form id="search-format-form" class="search-form">
+                        <input type="text" id="format-search" placeholder="Formato (e.g., Paperback)" required>
+                        <button type="submit">Buscar por Formato</button>
+                    </form>
+                </div>
+
+                <div class="form-section">
+                    <h3>Insertar libro</h3>
+                    <form id="insert-form" class="crud-form">
+                        <input type="text" id="isbn-insert" placeholder="ISBN" required>
+                        <input type="text" id="titulo-insert" placeholder="Título" required>
+                        <input type="number" id="id_autor-insert" placeholder="ID Autor" required>
+                        <input type="number" id="id_categoria-insert" placeholder="ID Categoría" required>
+                        <input type="number" id="id_editorial-insert" placeholder="ID Editorial" required>
+                        <input type="number" id="anio_publicacion-insert" placeholder="Año Publicación" required>
+                        <input type="number" id="price-insert" placeholder="Precio" step="0.01" required>
+                        <input type="number" id="stock-insert" placeholder="Stock" required>
+                        <input type="text" id="formato-insert" placeholder="Formato" required>
+                        <button type="submit">Insertar Libro</button>
+                    </form>
+                   
+                    <h3>Actualizar libro</h3>
+                    <form id="update-form" class="crud-form">
+                        <input type="text" id="isbn-update" placeholder="ISBN a actualizar" required>
+                        <input type="text" id="titulo-update" placeholder="Nuevo Título">
+                        <input type="number" id="id_autor-update" placeholder="Nuevo ID Autor">
+                        <input type="number" id="id_categoria-update" placeholder="Nuevo ID Categoría">
+                        <input type="number" id="id_editorial-update" placeholder="Nuevo ID Editorial">
+                        <input type="number" id="anio_publicacion-update" placeholder="Nuevo Año Publicación">
+                        <input type="number" id="price-update" placeholder="Nuevo Precio" step="0.01">
+                        <input type="number" id="stock-update" placeholder="Nuevo Stock">
+                        <input type="text" id="formato-update" placeholder="Nuevo Formato">
+                        <button type="submit">Actualizar Libro</button>
+                    </form>
+
+                    <h3>Eliminar libro</h3>
+                    <form id="delete-form" class="crud-form">
+                        <input type="text" id="isbn-delete" placeholder="ISBN a eliminar" required>
+                        <button type="submit">Eliminar Libro</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="log-section">
+            <h2>Logs del Cliente</h2>
+            <pre id="client-logs"></pre>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
+
