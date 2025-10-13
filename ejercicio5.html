@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio Guiado 5 - Archivos</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background: #fafafa;
+      color: #222;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    section {
+      margin-bottom: 2rem;
+    }
+    iframe {
+      width: 100%;
+      height: 500px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    a.back {
+      display: inline-block;
+      margin-bottom: 1rem;
+      text-decoration: none;
+      color: #0066cc;
+      font-weight: 600;
+    }
+    a.back:hover {
+      text-decoration: underline;
+    }
+    .directory-tree {
+    font-family: monospace; /* Fuente de código para una apariencia limpia */
+    line-height: 1.5;
+    background-color: #f8f8f8;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    color: #444;
+}
+
+.directory-tree ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    margin-left: 20px; /* Indentación para las carpetas */
+}
+
+.directory-tree li {
+    position: relative;
+    padding-left: 10px;
+}
+
+/* Pseudo-elementos para las líneas y los iconos de carpeta */
+.directory-tree ul li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -10px;
+    width: 15px;
+    height: 100%;
+    border-left: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+}
+
+.directory-tree ul li:last-child::before {
+    height: 15px;
+    border-left: none;
+}
+
+.directory-tree span.folder::before {
+    content: '📁'; /* Ícono de carpeta */
+    margin-right: 5px;
+}
+
+.directory-tree span.file::before {
+    content: '📄'; /* Ícono de archivo */
+    margin-right: 5px;
+}
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back">&larr; Regresar</a>
+  <h1>Ejercicio Guiado 5 - Archivos</h1>
+
+  <section>
+    <h2>Documento PDF</h2>
+    <iframe src="docs/ejerciciosguiados/ejercicio5/ejercicio5.pdf" title="Documento PDF"></iframe>
+  </section>
+
+  <section>
+  <h2>Estructura del directorio del ejercicio</h2>
+  <div class="directory-tree">
+  <p>/ (directorio raíz)</p>
+  <ul>
+    <li>
+      <span class="folder">├── Microservices/</span>
+      <ul>
+        <li>
+          <span class="folder">└── micro02/</span>
+          <ul>
+            <li><span class="file">└── main.py</span></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+      <span class="folder">└── WebApplication2/</span>
+      <ul>
+        <li><span class="file">├── index.html</span></li>
+        <li><span class="file">├── style.css</span></li>
+        <li><span class="file">└── script.js</span></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+  <h2>Códigos fuente (Archivos descargables)</h2>
+  <ul>
+    <li><a href="docs/ejerciciosguiados/ejercicio5/main.py" download="main.py">main.py</a></li>
+    <li><a href="docs/ejerciciosguiados/ejercicio5/index.html" download="index.html">index.html</a></li>
+    <li><a href="docs/ejerciciosguiados/ejercicio5/script.js" download="script.js">script.js</a></li>
+    <li><a href="docs/ejerciciosguiados/ejercicio5/style.css" download="style.css">style.css</a></li>
+    <li><a href="docs/ejerciciosguiados/ejercicio5/Libros.sql" download="Libros.sql">Libros.sql</a></li>
+  </ul>
+</section>
+
+</body>
+</html>
