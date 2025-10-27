@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio Guiado 6</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background: #fafafa;
+      color: #222;
+      line-height: 1.6; /* Añadido para mejor legibilidad */
+    }
+    h1, h2, h3 {
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    h2 {
+      border-bottom: 2px solid #0066cc; /* Línea bajo títulos principales */
+      padding-bottom: 5px;
+      margin-top: 2.5rem;
+    }
+    h3 {
+      color: #115599;
+      margin-top: 2rem;
+    }
+    section {
+      margin-bottom: 2rem;
+      background: #ffffff; /* Fondo blanco para las secciones */
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra suave */
+    }
+    
+    /* Estilo para imágenes (screenshots) */
+    img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+
+    /* Estilo para bloques de código */
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.95rem;
+    }
+    
+    /* Estilo para el botón de descarga (ZIP) */
+    .download-button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: #ffffff;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+    .download-button:hover {
+      background-color: #004a99;
+      text-decoration: none;
+    }
+
+    a.back {
+      display: inline-block;
+      margin-bottom: 1rem;
+      text-decoration: none;
+      color: #0066cc;
+      font-weight: 600;
+    }
+    a.back:hover {
+      text-decoration: underline;
+    }
+    
+    /* Estilos del árbol de directorios (sin cambios) */
+    .directory-tree {
+      font-family: monospace;
+      line-height: 1.5;
+      background-color: #f8f8f8;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      color: #444;
+    }
+    .directory-tree ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      margin-left: 20px;
+    }
+    .directory-tree li {
+      position: relative;
+      padding-left: 10px;
+    }
+    .directory-tree ul li::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -10px;
+      width: 15px;
+      height: 100%;
+      border-left: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+    }
+    .directory-tree ul li:last-child::before {
+      height: 15px;
+      border-left: none;
+    }
+    .directory-tree span.folder::before {
+      content: '📁';
+      margin-right: 5px;
+    }
+    .directory-tree span.file::before {
+      content: '📄';
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back">&larr; Regresar</a>
+  <h1>Pruebas locales del microservicio de books con Locust</h1>
+
+  <section id="introduccion">
+    <h2>Introducción</h2>
+    <p>
+      [Aquí va el párrafo de introducción. Explica de qué trata el proyecto, 
+      el contexto del microservicio de "books" y por qué se decide 
+      usar Locust para pruebas de carga.]
+    </p>
+    
+    <h3>Objetivos</h3>
+    <p>
+      El objetivo principal de esta práctica es...
+    </p>
+    <ul>
+      <li>
+        [Objetivo específico 1, por ejemplo: Comprender el funcionamiento 
+        básico de Locust para la simulación de usuarios.]
+      </li>
+      <li>
+        [Objetivo específico 2, por ejemplo: Implementar un script de 
+        prueba (locustfile) que interactúe con los endpoints del 
+        microservicio.]
+      </li>
+      <li>
+        [Objetivo específico 3, por ejemplo: Analizar los resultados 
+        obtenidos en la interfaz web de Locust para identificar 
+        posibles cuellos de botella.]
+      </li>
+    </ul>
+  </section>
+
+  <section id="desarrollo">
+    <h2>Desarrollo</h2>
+    <p>
+      [Aquí va una descripción general del proceso que seguiste. 
+      Puedes explicar cómo configuraste el entorno, los pasos 
+      principales que realizaste, etc.]
+    </p>
+
+    <h3>Estructura del Directorio</h3>
+    <p>
+      La organización de los archivos para este ejercicio es la siguiente:
+    </p>
+    <div class="directory-tree">
+      <p>/ (directorio raíz)</p>
+      <ul>
+        <li>
+          <span class="folder">├── Microservices/</span>
+          <ul>
+            <li>
+              <span class="folder">└── micro02/</span>
+              <ul>
+                <li><span class="file">└── main.py</span></li>
+                </ul>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <span class="folder">└── WebApplication2/</span>
+          <ul>
+            <li><span class="file">├── index.html</span></li>
+            <li><span class="file">├── style.css</span></li>
+            <li><span class="file">└── script.js</span></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <h3>Fragmentos de Código</h3>
+    <p>
+      El archivo principal del microservicio (`main.py`) se mantuvo simple. 
+      El foco estuvo en el script de pruebas `locustfile.py`:
+    </p>
+    <pre><code>
+# Pega tu fragmento de código aquí
+# Ejemplo de un locustfile.py:
+
+from locust import HttpUser, task, between
+
+class QuickstartUser(HttpUser):
+    wait_time = between(1, 2)
+
+    @task
+    def get_books(self):
+        self.client.get("/books")
+
+    @task(3) # Esta tarea se ejecutará 3 veces más que get_books
+    def get_book_by_id(self):
+        # Simula la obtención de un libro entre el ID 1 y 10
+        book_id = 1 
+        self.client.get(f"/books/{book_id}", name="/books/[id]")
+</code></pre>
+
+    <h3>Screenshots y Resultados</h3>
+    <p>
+      Una vez ejecutado Locust (con el comando `locust -f locustfile.py`), 
+      se accede a la interfaz web en `http://localhost:8089` para 
+      iniciar la simulación.
+    </p>
+    <p>
+      [Aquí puedes poner una captura de la pantalla de inicio de Locust 
+      donde configuras los usuarios.]
+    </p>
+    
+    <img src="images/locust_setup.png" alt="Configuración inicial de Locust">
+    
+    <p>
+      Tras ejecutar la prueba durante unos minutos, la pestaña de 
+      "Estadísticas" (Statistics) muestra los resultados:
+    </p>
+    
+    <img src="images/locust_results.png" alt="Resultados de la prueba de carga en Locust">
+
+
+    <h3>Archivos del Proyecto (Descarga)</h3>
+    <p>
+      Para solucionar el problema de tener los archivos "expuestos", 
+      la mejor solución es **comprimirlos en un solo archivo .zip**. 
+      De esta forma, solo ofreces un enlace de descarga.
+    </p>
+    <p>
+      Puedes descargar todos los archivos fuente utilizados en esta 
+      práctica (el `main.py`, `locustfile.py`, `Libros.sql`, etc.) 
+      desde el siguiente enlace:
+    </p>
+    <a href="archivos/Ejercicio6-Locust.zip" class="download-button" download>
+      Descargar Archivos del Proyecto (.zip)
+    </a>
+  </section>
+
+  <section id="conclusion">
+    <h2>Conclusión</h2>
+    <p>
+      [Aquí redactas tus conclusiones. ¿Qué aprendiste? ¿Se cumplieron 
+      los objetivos? ¿Qué problemas encontraste? ¿Cómo se comportó 
+      el microservicio bajo carga? ¿Qué limitaciones tiene Locust?]
+    </p>
+  </section>
+
+</body>
+</html>
