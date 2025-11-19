@@ -143,7 +143,7 @@
   <section id="desarrollo">
     <h2>Desarrollo</h2>
     <p>
-      La práctica consistió en la creación de un script en Python que define un <code>HttpUser</code>. Este usuario virtual ejecuta tareas secuenciales 
+      La práctica consistió en la creación de un script en Python que define un HttpUser. Este usuario virtual ejecuta tareas secuenciales 
       que cubren el flujo completo de la aplicación, desde la autenticación hasta la gestión del inventario de libros.
     </p>
 
@@ -154,15 +154,28 @@
     <div class="directory-tree">
       <p><strong>Estructura del Proyecto:</strong></p>
       <ul>
-        <li><span class="folder">Microservices/</span>
-          <ul>
-            <li><span class="folder">micro02_books/</span>
-              <ul>
-                <li><span class="file">main.py</span> (API Flask)</li>
-              </ul>
-            </li>
-          </ul>
-        </li>
+        <p>/ (directorio raíz)</p>
+        <ul>
+          <li>
+            <span class="folder">├── Microservices/</span>
+            <ul>
+              <li>
+                <span class="folder">└── micro02/</span>
+                <ul>
+                  <li><span class="file">└── main.py</span></li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <span class="folder">└── WebApplication2/</span>
+            <ul>
+              <li><span class="file">├── index.html</span></li>
+              <li><span class="file">├── style.css</span></li>
+              <li><span class="file">└── script.js</span></li>
+            </ul>
+          </li>
+        </ul>
       </ul>
       <br>
       <p><strong>Ejecución Local:</strong></p>
