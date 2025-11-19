@@ -12,7 +12,7 @@
       padding: 1rem;
       background: #fafafa;
       color: #222;
-      line-height: 1.6; /* Añadido para mejor legibilidad */
+      line-height: 1.6;
     }
     h1, h2, h3 {
       color: #333;
@@ -22,7 +22,7 @@
       margin-bottom: 1rem;
     }
     h2 {
-      border-bottom: 2px solid #0066cc; /* Línea bajo títulos principales */
+      border-bottom: 2px solid #0066cc;
       padding-bottom: 5px;
       margin-top: 2.5rem;
     }
@@ -32,22 +32,29 @@
     }
     section {
       margin-bottom: 2rem;
-      background: #ffffff; /* Fondo blanco para las secciones */
+      background: #ffffff;
       padding: 1.5rem;
       border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra suave */
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-    
-    /* Estilo para imágenes (screenshots) */
     img {
       max-width: 100%;
       height: auto;
       border: 1px solid #ccc;
       border-radius: 8px;
       margin: 1rem 0;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     }
-
-    /* Estilo para bloques de código */
+    .img-caption {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: -10px;
+      margin-bottom: 20px;
+      font-style: italic;
+    }
     pre {
       background: #1e1e1e;
       color: #d4d4d4;
@@ -55,10 +62,10 @@
       border-radius: 8px;
       overflow-x: auto;
       font-family: "Courier New", Courier, monospace;
-      font-size: 0.95rem;
+      font-size: 0.90rem;
+      max-height: 400px; /* Scroll si es muy largo */
+      overflow-y: auto;
     }
-    
-    /* Estilo para el botón de descarga (ZIP) */
     .download-button {
       display: inline-block;
       background-color: #0066cc;
@@ -69,12 +76,13 @@
       font-weight: 600;
       text-align: center;
       transition: background-color 0.3s;
+      margin-top: 1rem;
     }
     .download-button:hover {
       background-color: #004a99;
       text-decoration: none;
+      color: #fff;
     }
-
     a.back {
       display: inline-block;
       margin-bottom: 1rem;
@@ -85,8 +93,6 @@
     a.back:hover {
       text-decoration: underline;
     }
-    
-    /* Estilos del árbol de directorios (sin cambios) */
     .directory-tree {
       font-family: monospace;
       line-height: 1.5;
@@ -102,65 +108,34 @@
       padding: 0;
       margin-left: 20px;
     }
-    .directory-tree li {
-      position: relative;
-      padding-left: 10px;
-    }
-    .directory-tree ul li::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -10px;
-      width: 15px;
-      height: 100%;
-      border-left: 1px solid #ccc;
-      border-bottom: 1px solid #ccc;
-    }
-    .directory-tree ul li:last-child::before {
-      height: 15px;
-      border-left: none;
-    }
-    .directory-tree span.folder::before {
-      content: '📁';
-      margin-right: 5px;
-    }
-    .directory-tree span.file::before {
-      content: '📄';
-      margin-right: 5px;
-    }
+    .directory-tree span.folder::before { content: '📁 '; }
+    .directory-tree span.file::before { content: '📄 '; }
   </style>
 </head>
 <body>
 
   <a href="index.html" class="back">&larr; Regresar</a>
-  <h1>Pruebas locales del microservicio de books con Locust</h1>
+  <h1>Ejercicio Guiado 6: Pruebas locales con Locust</h1>
 
   <section id="introduccion">
     <h2>Introducción</h2>
     <p>
-      [Aquí va el párrafo de introducción. Explica de qué trata el proyecto, 
-      el contexto del microservicio de "books" y por qué se decide 
-      usar Locust para pruebas de carga.]
+      En el desarrollo de microservicios, asegurar que la aplicación pueda soportar múltiples peticiones simultáneas es crucial. 
+      Para este ejercicio, utilizamos <strong>Locust</strong>, una herramienta de pruebas de carga de código abierto escrita en Python. 
+      El propósito es simular el comportamiento de usuarios reales interactuando con el microservicio de "Books", permitiéndonos medir 
+      tiempos de respuesta y detectar errores de concurrencia antes de un despliegue en producción.
     </p>
     
     <h3>Objetivos</h3>
-    <p>
-      El objetivo principal de esta práctica es...
-    </p>
     <ul>
       <li>
-        [Objetivo específico 1, por ejemplo: Comprender el funcionamiento 
-        básico de Locust para la simulación de usuarios.]
+        <strong>Configurar el entorno de pruebas:</strong> Implementar el script <code>locustfile.py</code> definiendo el comportamiento de un usuario estándar (registro, login, consultas y creación de libros).
       </li>
       <li>
-        [Objetivo específico 2, por ejemplo: Implementar un script de 
-        prueba (locustfile) que interactúe con los endpoints del 
-        microservicio.]
+        <strong>Ejecutar simulación de carga:</strong> Realizar pruebas locales simulando 10 usuarios concurrentes para estresar los endpoints de la API.
       </li>
       <li>
-        [Objetivo específico 3, por ejemplo: Analizar los resultados 
-        obtenidos en la interfaz web de Locust para identificar 
-        posibles cuellos de botella.]
+        <strong>Analizar métricas de rendimiento:</strong> Interpretar los resultados obtenidos en la interfaz web de Locust, identificando latencias promedio y validando el manejo de errores (códigos 409 y 200).
       </li>
     </ul>
   </section>
@@ -168,108 +143,157 @@
   <section id="desarrollo">
     <h2>Desarrollo</h2>
     <p>
-      [Aquí va una descripción general del proceso que seguiste. 
-      Puedes explicar cómo configuraste el entorno, los pasos 
-      principales que realizaste, etc.]
+      La práctica consistió en la creación de un script en Python que define un <code>HttpUser</code>. Este usuario virtual ejecuta tareas secuenciales 
+      que cubren el flujo completo de la aplicación, desde la autenticación hasta la gestión del inventario de libros.
     </p>
 
-    <h3>Estructura del Directorio</h3>
+    <h3>1. Estructura del Directorio</h3>
     <p>
-      La organización de los archivos para este ejercicio es la siguiente:
+      A continuación se muestra la ubicación de los archivos del microservicio y la ruta local donde se ejecutó el script de pruebas:
     </p>
     <div class="directory-tree">
-      <p>/ (directorio raíz)</p>
+      <p><strong>Estructura del Proyecto:</strong></p>
       <ul>
-        <li>
-          <span class="folder">├── Microservices/</span>
+        <li><span class="folder">Microservices/</span>
           <ul>
-            <li>
-              <span class="folder">└── micro02/</span>
+            <li><span class="folder">micro02_books/</span>
               <ul>
-                <li><span class="file">└── main.py</span></li>
-                </ul>
+                <li><span class="file">main.py</span> (API Flask)</li>
+              </ul>
             </li>
           </ul>
         </li>
-        <li>
-          <span class="folder">└── WebApplication2/</span>
+      </ul>
+      <br>
+      <p><strong>Ejecución Local:</strong></p>
+      <ul>
+        <li><span class="folder">C:\temp\LOCUST\</span>
           <ul>
-            <li><span class="file">├── index.html</span></li>
-            <li><span class="file">├── style.css</span></li>
-            <li><span class="file">└── script.js</span></li>
+            <li><span class="file">locustfile.py</span> (Script de prueba)</li>
           </ul>
         </li>
       </ul>
     </div>
 
-    <h3>Fragmentos de Código</h3>
+    <h3>2. Script de Prueba (locustfile.py)</h3>
     <p>
-      El archivo principal del microservicio (`main.py`) se mantuvo simple. 
-      El foco estuvo en el script de pruebas `locustfile.py`:
+      El código implementado define una clase <code>BookstoreUser</code>. Se establecieron pesos (tasks weights) para dar más prioridad a tareas de lectura 
+      (como <code>get_all_books</code>) sobre las de escritura, simulando un tráfico realista.
     </p>
     <pre><code>
-# Pega tu fragmento de código aquí
-# Ejemplo de un locustfile.py:
+from locust import HttpUser, task, between, SequentialTaskSet
+import json
+import random
 
-from locust import HttpUser, task, between
-
-class QuickstartUser(HttpUser):
-    wait_time = between(1, 2)
-
-    @task
-    def get_books(self):
-        self.client.get("/books")
-
-    @task(3) # Esta tarea se ejecutará 3 veces más que get_books
-    def get_book_by_id(self):
-        # Simula la obtención de un libro entre el ID 1 y 10
-        book_id = 1 
-        self.client.get(f"/books/{book_id}", name="/books/[id]")
-</code></pre>
-
-    <h3>Screenshots y Resultados</h3>
-    <p>
-      Una vez ejecutado Locust (con el comando `locust -f locustfile.py`), 
-      se accede a la interfaz web en `http://localhost:8089` para 
-      iniciar la simulación.
-    </p>
-    <p>
-      [Aquí puedes poner una captura de la pantalla de inicio de Locust 
-      donde configuras los usuarios.]
-    </p>
+class BookstoreTaskSet(SequentialTaskSet):
+    """
+    Conjunto de tareas secuenciales que simulan el flujo de un usuario real
+    """
     
-    <img src="images/locust_setup.png" alt="Configuración inicial de Locust">
+    def on_start(self):
+        """Se ejecuta cuando un usuario virtual inicia"""
+        self.username = f"user_{random.randint(1000, 999999)}"
+        self.password = "testpass123"
+        self.access_token = None
+        self.register_user()
+        self.login_user()
     
-    <p>
-      Tras ejecutar la prueba durante unos minutos, la pestaña de 
-      "Estadísticas" (Statistics) muestra los resultados:
-    </p>
+    def register_user(self):
+        self.client.post(
+            "/auth/register",
+            json={"username": self.username, "password": self.password},
+            name="AUTH: Register"
+        )
     
-    <img src="images/locust_results.png" alt="Resultados de la prueba de carga en Locust">
+    def login_user(self):
+        response = self.client.post(
+            "/auth/login",
+            json={"username": self.username, "password": self.password},
+            name="AUTH: Login"
+        )
+        if response.status_code == 200:
+            self.access_token = response.json().get("access_token")
 
+    def get_headers(self):
+        if self.access_token:
+            return {"Authorization": f"Bearer {self.access_token}"}
+        return {}
+    
+    @task(5)
+    def get_all_books(self):
+        self.client.get("/api/books", headers=self.get_headers(), name="BOOKS: Get All")
+    
+    @task(1)
+    def create_book(self):
+        # Datos aleatorios para simular creación
+        book_data = {
+            "isbn": f"978-{random.randint(10000,99999)}",
+            "titulo": f"Libro Prueba {random.randint(1, 9999)}",
+            "id_autor": random.randint(1, 10),
+            "price": round(random.uniform(10.0, 100.0), 2),
+            "formato": "Digital"
+        }
+        self.client.post("/api/books/create", json=book_data, headers=self.get_headers(), name="BOOKS: Create")
 
-    <h3>Archivos del Proyecto (Descarga)</h3>
+class BookstoreUser(HttpUser):
+    tasks = [BookstoreTaskSet]
+    wait_time = between(1, 3)
+    host = "http://127.0.0.1:5000"
+    </code></pre>
+
+    <h3>3. Ejecución y Resultados</h3>
     <p>
-      Para solucionar el problema de tener los archivos "expuestos", 
-      la mejor solución es **comprimirlos en un solo archivo .zip**. 
-      De esta forma, solo ofreces un enlace de descarga.
+      Se inició Locust mediante el comando <code>locust -f locustfile.py</code>. Accedimos a la interfaz web en el puerto 8089 y configuramos 
+      una prueba con <strong>10 usuarios</strong> y una tasa de generación (ramp-up) de 5 usuarios por segundo.
     </p>
+
+    <img src="Screenshot (659).png" alt="Configuración inicial de Locust">
+    <div class="img-caption">Fig 1. Configuración de parámetros iniciales en Locust.</div>
+
     <p>
-      Puedes descargar todos los archivos fuente utilizados en esta 
-      práctica (el `main.py`, `locustfile.py`, `Libros.sql`, etc.) 
-      desde el siguiente enlace:
+      <strong>Análisis de Estadísticas:</strong><br>
+      Durante la ejecución, se observó un comportamiento estable. La mayoría de las peticiones (GET /api/books) tuvieron tiempos de respuesta 
+      promedio de 216ms. Como se observa en la tabla, las peticiones de "Register" mostraron una tasa de fallos controlada.
+    </p>
+
+    <img src="Screenshot (662).png" alt="Tabla de estadísticas de Locust">
+    <div class="img-caption">Fig 2. Resumen de peticiones, latencia media y tasa de fallos.</div>
+
+    <p>
+      <strong>Gráficos de Rendimiento:</strong><br>
+      Las gráficas muestran cómo el tiempo de respuesta (línea morada) aumentó inicialmente mientras se creaban los usuarios, para luego estabilizarse 
+      alrededor de los 200ms una vez alcanzada la concurrencia máxima de 10 usuarios (línea azul).
+    </p>
+
+    <img src="Screenshot (660).png" alt="Gráficos de tiempo de respuesta y usuarios">
+    <div class="img-caption">Fig 3. Gráficos de peticiones por segundo y tiempos de respuesta.</div>
+
+    <p>
+      <strong>Análisis de Errores:</strong><br>
+      Se registraron fallos específicos en el endpoint <code>/auth/register</code>. Al revisar la pestaña de "Failures", confirmamos que se trata 
+      de errores <strong>409 Conflict</strong>. Esto es un comportamiento esperado y correcto del microservicio, ya que indica que Locust intentó 
+      registrar un nombre de usuario que ya existía en la base de datos debido a la aleatoriedad del script.
+    </p>
+
+    <img src="Screenshot (663).png" alt="Detalle de errores 409">
+    <div class="img-caption">Fig 4. Detalle del error 409 (Conflict) en el registro de usuarios.</div>
+
+    <h3>Archivos del Proyecto</h3>
+    <p>
+      A continuación se adjunta el paquete completo con el código fuente del microservicio, el script de pruebas y la documentación generada.
     </p>
     <a href="archivos/Ejercicio6-Locust.zip" class="download-button" download>
-      Descargar Archivos del Proyecto (.zip)
+      Descargar Documentación y Código (.zip)
     </a>
   </section>
 
   <section id="conclusion">
     <h2>Conclusión</h2>
     <p>
-      [Aquí redactas tus conclusiones. ¿Qué aprendiste? ¿Se cumplieron 
-      los objetivos? ¿Qué problemas encontraste? ¿Cómo se comportó 
-      el microservicio bajo carga? ¿Qué limitaciones tiene Locust?]
+      La implementación de pruebas de carga con Locust permitió validar satisfactoriamente el rendimiento del microservicio de Libros. 
+      Se logró simular un escenario de tráfico moderado donde el sistema respondió con latencias aceptables (promedio ~200ms). 
+      Además, la detección de errores 409 confirmó que las validaciones de lógica de negocio (evitar usuarios duplicados) están funcionando correctamente 
+      bajo estrés. Esta práctica demuestra la importancia de automatizar pruebas de rendimiento para asegurar la estabilidad de las APIs antes de su integración final.
     </p>
   </section>
 
