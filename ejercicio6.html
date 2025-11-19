@@ -263,23 +263,53 @@ class BookstoreUser(HttpUser):
     <img src="Screenshot (659).png" alt="Configuración inicial de Locust">
     <div class="img-caption">Fig 1. Configuración de parámetros iniciales en Locust.</div>
 
+   <h3>3. Análisis de Resultados y Métricas</h3>
+    
     <p>
-      <strong>Análisis de Estadísticas:</strong><br>
-      Durante la ejecución, se observó un comportamiento estable. La mayoría de las peticiones (GET /api/books) tuvieron tiempos de respuesta 
-      promedio de 216ms. Como se observa en la tabla, las peticiones de "Register" mostraron una tasa de fallos controlada.
+      <strong>Tabla de Estadísticas (Statistics):</strong><br>
+      La tabla resume el comportamiento de cada endpoint. El endpoint más estresado fue <code>GET /api/books</code> 
+      (obtener lista de libros) con 320 peticiones.
     </p>
+    <ul>
+      <li><strong>Latencia:</strong> El tiempo de respuesta promedio (Average) se mantuvo en <strong>216ms</strong>, lo cual es un tiempo aceptable para una respuesta local.</li>
+      <li><strong>Concurrencia:</strong> Se logró mantener una tasa de <strong>12.2 RPS</strong> (Peticiones por Segundo) constantes sin caídas del servidor.</li>
+      <li><strong>Errores:</strong> Los fallos en <code>/auth/register</code> no son errores del servidor, sino respuestas <strong>HTTP 409</strong> esperadas al intentar registrar usuarios ya existentes.</li>
+    </ul>
 
     <img src="Screenshot (662).png" alt="Tabla de estadísticas de Locust">
-    <div class="img-caption">Fig 2. Resumen de peticiones, latencia media y tasa de fallos.</div>
+    <div class="img-caption">Fig 2. La tabla muestra una latencia media estable (~200ms) y una distribución de carga correcta entre lectura y escritura.</div>
 
     <p>
-      <strong>Gráficos de Rendimiento:</strong><br>
-      Las gráficas muestran cómo el tiempo de respuesta (línea morada) aumentó inicialmente mientras se creaban los usuarios, para luego estabilizarse 
-      alrededor de los 200ms una vez alcanzada la concurrencia máxima de 10 usuarios (línea azul).
+      <strong>Interpretación de Gráficos (Charts):</strong><br>
+      El análisis visual nos permite correlacionar la carga de usuarios con el rendimiento del servidor.
     </p>
 
-    <img src="Screenshot (660).png" alt="Gráficos de tiempo de respuesta y usuarios">
-    <div class="img-caption">Fig 3. Gráficos de peticiones por segundo y tiempos de respuesta.</div>
+    <p>
+      <em>1. Rendimiento y Estabilidad (RPS vs Latencia):</em><br>
+      En la siguiente gráfica observamos dos métricas clave:
+    </p>
+    <ul>
+      <li><strong>Línea Verde (Total Requests per Second):</strong> Muestra el caudal de peticiones. Se estabilizó rápidamente en unas <strong>12-13 peticiones/segundo</strong> y se mantuvo constante (línea plana), lo que indica que el servidor no se saturó y pudo atender la demanda continua.</li>
+      <li><strong>Línea Morada (95th Percentile Response Time):</strong> Muestra el tiempo de respuesta. Se observa un <strong>pico inicial de casi 700ms</strong>. Este comportamiento es normal durante la fase de "calentamiento" (Ramp-up), donde el sistema está procesando los registros y logins simultáneos. Una vez que los usuarios se estabilizaron, la latencia cayó y se mantuvo estable cerca de los <strong>200ms</strong>.</li>
+    </ul>
+
+    <img src="Screenshot (660).png" alt="Gráficos de total de requests y tiempo de respuesta">
+    <div class="img-caption">Fig 3. La línea verde (RPS) muestra estabilidad en el procesamiento. La línea morada muestra cómo el tiempo de respuesta se estabiliza tras el pico inicial.</div>
+
+    <p>
+      <em>2. Correlación con el Número de Usuarios:</em><br>
+      Esta gráfica confirma la causa del pico de latencia mencionado arriba.
+    </p>
+    <ul>
+      <li><strong>Línea Azul (Number of Users):</strong> Muestra la rampa de subida (Ramp-up) de 0 a 10 usuarios.</li>
+      <li>
+        Podemos ver claramente que <strong>el pico de latencia (línea morada) coincide exactamente con la subida de la línea azul</strong>. 
+        Esto nos dice que el sistema sufre un poco más de estrés al crear las sesiones (Login/Register), pero una vez que los 10 usuarios están activos (la línea azul se aplana), el sistema entra en un estado estable y rápido.
+      </li>
+    </ul>
+
+    <img src="Screenshot (661).png" alt="Gráficos de tiempo de respuesta y usuarios">
+    <div class="img-caption">Fig 4. Comparativa: A medida que los usuarios (azul) llegan al máximo, el tiempo de respuesta (morada) se estabiliza.</div>
 
     <p>
       <strong>Análisis de Errores:</strong><br>
@@ -289,13 +319,13 @@ class BookstoreUser(HttpUser):
     </p>
 
     <img src="Screenshot (663).png" alt="Detalle de errores 409">
-    <div class="img-caption">Fig 4. Detalle del error 409 (Conflict) en el registro de usuarios.</div>
+    <div class="img-caption">Fig 5. Detalle del error 409 (Conflict) en el registro de usuarios.</div>
 
     <h3>Archivos del Proyecto</h3>
     <p>
       A continuación se adjunta el paquete completo con el código fuente del microservicio, el script de pruebas y la documentación generada.
     </p>
-    <a href="archivos/Ejercicio6-Locust.zip" class="download-button" download>
+    <a href="docs/ejerciciosguiados/ejercicio6/ActividadLocust.zip" class="download-button" download>
       Descargar Documentación y Código (.zip)
     </a>
   </section>
