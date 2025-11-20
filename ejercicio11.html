@@ -76,9 +76,9 @@
   <section id="objetivos">
     <h2>2. Objetivos de la Prueba</h2>
     <ul>
-      <li><strong>Supervivencia del Sistema:</strong> Verificar si el API Gateway y los microservicios siguen operando sin reiniciarse durante un pico de tráfico del 1000% (de 20 a 200 usuarios en segundos).</li>
-      <li><strong>Tiempo de Recuperación:</strong> Medir cuánto tarda el sistema en volver a latencias normales (Baseline) una vez que el pico de tráfico desaparece.</li>
-      <li><strong>Identificar el Eslabón Débil:</strong> Detectar qué componente específico (Auth, BD, Gateway) falla primero ante la saturación súbita.</li>
+      <li>Medir la respuesta del sistema (latencia y errores) ante un pico abrupto de 200 a 1000 usuarios en 10 segundos.</li>
+      <li>Verificar si el sistema "degrada con gracia" (sin caídas totales) y si la latencia p95 se recupera tras el pico.</li>
+      <li>Observar los efectos de posibles mecanismos de protección (ej. errores 429 Too Many Requests, 503 Service Unavailable, o timeouts).</li>
     </ul>
   </section>
 
