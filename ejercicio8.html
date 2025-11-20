@@ -58,41 +58,60 @@
 
   <a href="index.html" class="back">&larr; Regresar</a>
   
-  <h1>Ejercicio Guiado 7: Pruebas Smoke en Locust</h1>
+  <h1>Ejercicio Guiado 8: Pruebas Smoke en Locust</h1>
 
   <section id="introduccion">
     <h2>1. Introducción</h2>
     <p>
       Este reporte documenta la ejecución de la <strong>Prueba Smoke</strong> para el ecosistema <strong>PredictHealth</strong>.
-      A diferencia de las pruebas de carga masiva, el objetivo de esta fase es realizar una verificación de sanidad del sistema ("Sanity Check"). 
-      Se busca confirmar que los 4 microservicios críticos (Auth, Doctors, Patients, Institutions) y el API Gateway están correctamente orquestados, levantados y accesibles a nivel de red antes de haber procedido con pruebas más complejas.
+      A diferencia de las pruebas de carga masiva, el objetivo de esta fase es realizar una verificación de sanidad del sistema. 
+      Se busca confirmar que los 4 microservicios críticos (Auth, Doctors, Patients, Institutions) y el CMS están correctamente orquestados, levantados y accesibles a nivel de red antes de haber procedido con pruebas más complejas.
     </p>
   </section>
 
   <section id="objetivos">
     <h2>2. Objetivos de la Prueba</h2>
     <ul>
-      <li><strong>Verificar Disponibilidad (Uptime):</strong> Asegurar que el API Gateway y los microservicios respondan con códigos de éxito (HTTP 200/201) bajo una carga mínima.</li>
-      <li><strong>Validar Conectividad Interna:</strong> Confirmar que el Gateway puede enrutar tráfico hacia los contenedores de backend sin errores de "Bad Gateway" (502) o "Service Unavailable" (503).</li>
-      <li><strong>Validar Integridad de Base de Datos:</strong> Confirmar que las operaciones de lectura básica retornan datos estructurados (JSON) y no errores de conexión SQL.</li>
+      <li>Verificar rápidamente disponibilidad de endpoints críticos tras despliegue/cambio: login JWT, lecturas básicas y una operación CRUD por servicio.</li>
+      <li>Confirmar configuración/credenciales y conectividad a DB/Redis antes de pruebas más intensas.</li>
+      <li>Aceptación: 0–0.5% de errores; p95 <1 s en todo el flujo.</li>
     </ul>
   </section>
 
   <section id="metodologia">
     <h2>3. Metodología</h2>
-    <h3>Arquitectura del Entorno</h3>
+    <h3>Arquitectura del Entorno de Prueba</h3>
     <p>
-      La prueba se ejecutó en el entorno local dockerizado, utilizando una configuración de carga mínima para aislar variables funcionales.
+      Las pruebas se ejecutaron desde una máquina local que actuaba como nodo maestro de Locust, generando tráfico HTTP hacia los servicios desplegados. 
+      Los componentes del sistema (CMS y microservicios) estaban corriendo localmente a través de Docker Compose, lo que asegura un entorno aislado y consistente para la evaluación.
     </p>
+    <p>La arquitectura general de la prueba sigue el siguiente flujo:</p>
     <div class="tech-block">
-      [Locust Master] -> [API Gateway] -> [Microservicios Core] -> [PostgreSQL]
+      [Máquina Local (Locust Master)] -> [Red Local (Docker Network)] -> [Contenedores de CMS y Microservicios] -> [Contenedores de PostgreSQL y Redis]
     </div>
     
-    <h3>Herramientas y Configuración</h3>
+    <p>Las URLs base configuradas para cada servicio bajo prueba fueron las siguientes:</p>
     <ul>
-      <li><strong>Locust:</strong> Ejecutado en modo "headless" para integración continua.</li>
-      <li><strong>Datos:</strong> Se utilizó el archivo <code>users.csv</code>, limitando la lectura a 5 usuarios de prueba verificados.</li>
-      <li><strong>Filtro de Tareas:</strong> Se utilizaron etiquetas <code>@task(tag="smoke")</code> para ejecutar exclusivamente flujos de lectura y login, excluyendo transacciones complejas.</li>
+      <li><strong>CMS:</strong> <code>http://localhost:80</code></li>
+      <li><strong>Servicio Auth-JWT:</strong> <code>http://localhost:5000</code></li>
+      <li><strong>Servicio de Instituciones:</strong> <code>http://localhost:5001</code></li>
+      <li><strong>Servicio de Doctores:</strong> <code>http://localhost:5002</code></li>
+      <li><strong>Servicio de Pacientes:</strong> <code>http://localhost:5003</code></li>
+    </ul>
+
+    <h3>Herramientas Utilizadas</h3>
+    <ul>
+      <li><strong>Locust:</strong> Versión 2.41.6</li>
+      <li><strong>Sistema Operativo:</strong> Windows 11</li>
+      <li><strong>Hardware:</strong> CPU 2 núcleos (4+ recomendado), RAM 4GB (8GB+ recomendado), Almacenamiento 10GB disponible.</li>
+      <li><strong>Infraestructura:</strong> 
+        <ul>
+          <li>Docker (v20.10+) y Docker Compose (v2.0+)</li>
+          <li>Memoria asignada a contenedores: 8GB+ RAM</li>
+        </ul>
+      </li>
+      <li><strong>Backends:</strong> PostgreSQL (v15+), Redis (v6.0+) con soporte para 20+ conexiones simultáneas.</li>
+      <li><strong>Lenguaje:</strong> Python 3.11+</li>
     </ul>
   </section>
 
