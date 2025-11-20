@@ -204,92 +204,46 @@
   </section>
 
   <section id="codigo-generado">
-    <h2>4. Código Generado (baseline_test.py)</h2>
+    <h2>5. Código Generado</h2>
+
+    <h3>Prueba Baseline</h3>
+    <p><strong>Archivo baseline_test.py</strong></p>
     <p>
-      A continuación se presenta la estructura del script desarrollado. Se implementó una clase base para la autenticación común y tres clases derivadas para segregar el tráfico por tipo de usuario, tal como se especificó en el diseño de la prueba.
+      El script baseline_test.py se encarga de definir el comportamiento de los usuarios. Importa clases de usuarios (DoctorUser, PatientUser, InstitutionUser) de un módulo común, permitiendo que cada tipo de usuario ejecute tareas específicas para sus respectivos microservicios.
     </p>
+<pre><code># baseline_test.py
+"""
+Prueba de Línea Base (Baseline Test):
+- Objetivo: Establecer una métrica de rendimiento base con una carga moderada y constante.
+- Carga: 50 usuarios de cada tipo (150 en total).
+- Duración: Corta (5 minutos).
+- Tareas: Ejecuta todas las tareas (lectura, escritura) EXCEPTO las de 'smoke'.
+"""
 
-<pre><code><span class="keyword">from</span> locust <span class="keyword">import</span> HttpUser, task, between, events
-<span class="keyword">import</span> pandas <span class="keyword">as</span> pd
-<span class="keyword">import</span> random
+from common.users import DoctorUser, PatientUser, InstitutionUser
+import common.reporting</code></pre>
 
-<span class="comment"># Carga de datos: Lectura del archivo CSV para parametrización de usuarios</span>
-users_df = pd.read_csv(<span class="string">"users.csv"</span>)
-
-<span class="keyword">class</span> <span class="function">PredictHealthBaseUser</span>(HttpUser):
-    <span class="string">"""Clase base que maneja la autenticación común para todos los roles"""</span>
-    abstract = <span class="keyword">True</span>
-    wait_time = between(1, 5)
-    
-    <span class="keyword">def</span> <span class="function">on_start</span>(self):
-        <span class="comment"># Selecciona una credencial aleatoria del pool de datos</span>
-        user_row = users_df.sample(1).iloc[0]
-        self.email = user_row[<span class="string">'email'</span>]
-        self.password = user_row[<span class="string">'password'</span>]
-        
-        <span class="comment"># Autenticación contra el microservicio Auth</span>
-        response = self.client.post(<span class="string">"/auth/login"</span>, json={
-            <span class="string">"email"</span>: self.email, 
-            <span class="string">"password"</span>: self.password
-        })
-        
-        <span class="keyword">if</span> response.status_code == 200:
-            self.token = response.json().get(<span class="string">"access_token"</span>)
-            self.headers = {<span class="string">"Authorization"</span>: f<span class="string">"Bearer {self.token}"</span>}
-        <span class="keyword">else</span>:
-            self.token = <span class="keyword">None</span>
-            self.headers = {}
-
-<span class="keyword">class</span> <span class="function">DoctorUser</span>(PredictHealthBaseUser):
-    <span class="string">"""Simula 50 usuarios concurrentes tipo Doctor"""</span>
-    weight = 1
-    
-    <span class="keyword">@task</span>(3)
-    <span class="keyword">def</span> <span class="function">get_all_doctors</span>(self):
-        <span class="keyword">if</span> self.token:
-            self.client.get(<span class="string">"/api/doctors"</span>, headers=self.headers, name=<span class="string">"Doctor: Get All"</span>)
-            
-    <span class="keyword">@task</span>(1)
-    <span class="keyword">def</span> <span class="function">create_doctor</span>(self):
-        <span class="comment"># Tarea de escritura (menor frecuencia)</span>
-        <span class="keyword">if</span> self.token:
-            payload = {
-                <span class="string">"name"</span>: f<span class="string">"Dr. Test {random.randint(1000,9999)}"</span>,
-                <span class="string">"specialty"</span>: <span class="string">"General"</span>
-            }
-            self.client.post(<span class="string">"/api/doctors"</span>, json=payload, headers=self.headers, name=<span class="string">"Doctor: Create"</span>)
-
-<span class="keyword">class</span> <span class="function">PatientUser</span>(PredictHealthBaseUser):
-    <span class="string">"""Simula 50 usuarios concurrentes tipo Paciente"""</span>
-    weight = 1
-    
-    <span class="keyword">@task</span>(4)
-    <span class="keyword">def</span> <span class="function">get_all_patients</span>(self):
-        <span class="keyword">if</span> self.token:
-            self.client.get(<span class="string">"/api/patients"</span>, headers=self.headers, name=<span class="string">"Patient: Get All"</span>)
-
-<span class="keyword">class</span> <span class="function">InstitutionUser</span>(PredictHealthBaseUser):
-    <span class="string">"""Simula 50 usuarios concurrentes tipo Institución"""</span>
-    weight = 1
-    
-    <span class="keyword">@task</span>(2)
-    <span class="keyword">def</span> <span class="function">search_institution</span>(self):
-        <span class="keyword">if</span> self.token:
-            self.client.get(<span class="string">"/api/institutions/search?q=Hospital"</span>, headers=self.headers, name=<span class="string">"Inst: Search"</span>)
-</code></pre>
+    <h3>Archivo users.csv (Ejemplo)</h3>
+    <p>
+      Se utilizó un archivo users.csv para alimentar a los usuarios simulados con credenciales únicas, asegurando que las pruebas de login y las operaciones autenticadas fueran realistas y no dependieran de un único token.
+    </p>
+<pre><code>id,password,email
+163749fb-8b46-4447-a8b7-95b4a59531b6,Hkfx0Igv_5M(,contacto@despacho-grijalva-mascarenas-y-parra.predicthealth.com
+83b74179-f6ef-4219-bc70-c93f4393a350,gj6hdu&2k%(F,contacto@laboratorios-saldivar-santillan-y-villanueva.predicthealth.com
+50503414-ca6d-4c1a-a34f-18719e2fd555,PG7KqxVm#em1,contacto@trejo-vigil-e-hijos.predicthealth.com</code></pre>
   </section>
 
   <section id="resultados">
-    <h2>5. Resultados e Interpretación Técnica</h2>
+    <h2>6. Resultados e Interpretación Técnica</h2>
     <p>
       La prueba se ejecutó durante un periodo sostenido tras alcanzar el pico de 150 usuarios (Ramp-up). A continuación, desglosamos el análisis de las métricas clave.
     </p>
 
-    <h3>5.1 Métricas Generales (Statistics)</h3>
+    <h3>6.1 Métricas Generales (Statistics)</h3>
     <img src="baseline.png" alt="Tabla de estadísticas de Locust">
     <div class="img-caption">Fig 1. Resumen acumulado. Nótese la diferenciación entre peticiones exitosas (Green) y fallidas (Red).</div>
 
-    <h3>5.2 Análisis de Gráficas de Rendimiento</h3>
+    <h3>6.2 Análisis de Gráficas de Rendimiento</h3>
     <img src="graficas_baseline.png" alt="Gráficos de tiempo de respuesta y usuarios">
     <div class="img-caption">Fig 2. Correlación visual entre carga (Usuarios) y latencia (Tiempo de respuesta).</div>
 
@@ -311,7 +265,7 @@ users_df = pd.read_csv(<span class="string">"users.csv"</span>)
   </section>
 
   <section id="conclusiones">
-    <h2>6. Conclusiones y Recomendaciones</h2>
+    <h2>7. Conclusiones y Recomendaciones</h2>
 
     <h3>¿Son los sistemas listos para producción?</h3>
     <p>
