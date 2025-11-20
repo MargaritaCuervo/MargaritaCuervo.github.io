@@ -52,6 +52,7 @@
     a.back { text-decoration: none; color: #666; font-weight: bold; }
     
     .alert-info { background-color: #d1ecf1; color: #0c5460; padding: 1rem; border-radius: 5px; border: 1px solid #bee5eb; margin-top: 1rem; }
+    .alert-warning { background-color: #fff3cd; color: #856404; padding: 1rem; border-radius: 5px; border: 1px solid #ffeeba; margin-top: 1rem; }
   </style>
 </head>
 <body>
@@ -74,10 +75,16 @@
 
   <section id="objetivos">
     <h2>2. Objetivos de la Prueba</h2>
+    <h3>Read-heavy</h3>
     <ul>
-      <li><strong>Comparar Rendimiento (RPS):</strong> Medir la diferencia en la capacidad de procesamiento de peticiones (Throughput) entre un escenario mayoritariamente de lectura (90/10) frente a uno de escritura (20/80).</li>
-      <li><strong>Evaluar Latencia de Escritura:</strong> Identificar cuánto aumenta el tiempo de respuesta cuando múltiples usuarios intentan escribir concurrentemente en la misma tabla (Doctores/Pacientes).</li>
-      <li><strong>Identificar Cuellos de Botella en BD:</strong> Detectar si la base de datos PostgreSQL se convierte en el limitante debido a bloqueos (locks) o falta de optimización en los INSERTs.</li>
+      <li>Validar capacidad de consulta bajo alta concurrencia y beneficio de Redis (hit ratio objetivo ≥70%).</li>
+      <li>Mantener p95 de lecturas ≤350–400 ms y error rate ≤1%.</li>
+    </ul>
+    <h3>Write-heavy</h3>
+    <ul>
+      <li>Validar la capacidad funcional del sistema para ingerir datos (operaciones POST) bajo una carga concurrente de 60 usuarios.</li>
+      <li>Identificar el tipo de error (funcional, de permisos, o de rendimiento) que ocurre durante las operaciones de escritura masiva.</li>
+      <li>Medir la latencia p95 de las peticiones de login bajo carga de escritura, ya que fueron las únicas operaciones exitosas.</li>
     </ul>
   </section>
 
@@ -86,9 +93,8 @@
     <h3>Arquitectura del Entorno de Prueba</h3>
     <p>
       Las pruebas se ejecutaron desde una máquina local que actuaba como nodo maestro de Locust, generando tráfico HTTP hacia los servicios desplegados. 
-      Los componentes del sistema (CMS y microservicios) estaban corriendo localmente a través de Docker Compose, lo que asegura un entorno aislado y consistente para la evaluación.
+      Los componentes del sistema (CMS y microservicios) estaban corriendo localmente a través de Docker Compose.
     </p>
-    <p>La arquitectura general de la prueba sigue el siguiente flujo:</p>
     <div class="tech-block">
       [Máquina Local (Locust Master)] -> [Red Local (Docker Network)] -> [Contenedores de CMS y Microservicios] -> [Contenedores de PostgreSQL y Redis]
     </div>
@@ -105,62 +111,63 @@
     <h3>Herramientas Utilizadas</h3>
     <ul>
       <li><strong>Locust:</strong> Versión 2.41.6</li>
-      <li><strong>Infraestructura:</strong> Docker (v20.10+) y Docker Compose (v2.0+).</li>
-      <li><strong>Backends:</strong> PostgreSQL (v15+), Redis (v6.0+).</li>
+      <li><strong>Sistema Operativo:</strong> Windows 11</li>
+      <li><strong>Hardware:</strong> CPU 2 núcleos (4+ recomendado), RAM 4GB (8GB+ recomendado), Almacenamiento 10GB disponible.</li>
+      <li><strong>Infraestructura:</strong> 
+        <ul>
+          <li>Docker (v20.10+) y Docker Compose (v2.0+)</li>
+          <li>Memoria asignada a contenedores: 8GB+ RAM</li>
+        </ul>
+      </li>
+      <li><strong>Backends:</strong> PostgreSQL (v15+), Redis (v6.0+) con soporte para 20+ conexiones simultáneas.</li>
+      <li><strong>Lenguaje:</strong> Python 3.11+</li>
     </ul>
   </section>
 
   <section id="escenarios">
     <h2>4. Descripción de los Escenarios de Carga</h2>
     <p>
-      Se definieron dos perfiles de usuario distintos en el archivo <code>read_write_test.py</code>, controlados mediante pesos (weights) en las tareas de Locust.
+      Se definieron dos scripts distintos para modular el comportamiento de los usuarios simulados.
     </p>
 
     <h3>Escenario A: Read-Heavy (Lectura Intensiva)</h3>
     <ul>
-      <li><strong>Proporción:</strong> 90% Lectura / 10% Escritura.</li>
-      <li><strong>Comportamiento:</strong> Simula un día típico de operación donde la mayoría de usuarios consulta información y pocos crean registros.</li>
-      <li><strong>Tareas Clave:</strong> <code>get_all_doctors</code> (Peso 9), <code>create_doctor</code> (Peso 1).</li>
+      <li><strong>Archivo:</strong> <code>read_heavy_test.py</code></li>
+      <li><strong>Configuración:</strong> Se priorizaron las tareas de consulta (GET) sobre las de creación (POST).</li>
+      <li><strong>Comportamiento:</strong> Simula un día típico de operación donde la mayoría de usuarios consulta información.</li>
     </ul>
 
     <h3>Escenario B: Write-Heavy (Escritura Intensiva)</h3>
     <ul>
-      <li><strong>Proporción:</strong> 20% Lectura / 80% Escritura.</li>
-      <li><strong>Comportamiento:</strong> Simula un evento de alta demanda de registro, como una campaña de vacunación o migración de datos.</li>
-      <li><strong>Tareas Clave:</strong> <code>create_patient</code> (Peso 8), <code>get_patient_details</code> (Peso 2).</li>
+      <li><strong>Archivo:</strong> <code>write_heavy_test.py</code></li>
+      <li><strong>Configuración:</strong> Se invirtieron los pesos para generar una alta carga de inserciones en base de datos.</li>
+      <li><strong>Comportamiento:</strong> Simula un evento de carga masiva de datos o registro inicial de usuarios.</li>
     </ul>
   </section>
 
   <section id="codigo-generado">
     <h2>5. Código Generado</h2>
-    <p><strong>Archivo read_write_test.py</strong></p>
-    <p>
-      El script utiliza el decorador <code>@task(peso)</code> para manipular la probabilidad de ejecución de cada endpoint.
-    </p>
-<pre><code># read_write_test.py
+    
+    <h3>Script Read-Heavy</h3>
+    <p>El código define tareas donde la lectura tiene mayor peso probabilístico.</p>
+<pre><code># read_heavy_test.py
 from locust import HttpUser, task, between
-# ... imports ...
+from common.users import DoctorUser, PatientUser, InstitutionUser
+import common.reporting
 
-class ReadHeavyUser(HttpUser):
-    weight = 10
-    @task(9)
-    def read_data(self):
-        self.client.get("/api/doctors", name="Read: Get Doctors")
-        
-    @task(1)
-    def write_data(self):
-        # Payload aleatorio
-        self.client.post("/api/doctors", json={...}, name="Write: Create Doctor")
+# En este script, las tareas de lectura en los módulos importados
+# tienen una frecuencia de ejecución mucho mayor (90%)
+</code></pre>
 
-class WriteHeavyUser(HttpUser):
-    weight = 10
-    @task(2)
-    def read_data(self):
-        self.client.get("/api/patients", name="Read: Get Patients")
-        
-    @task(8)
-    def write_data(self):
-        self.client.post("/api/patients", json={...}, name="Write: Create Patient")
+    <h3>Script Write-Heavy</h3>
+    <p>El código prioriza las operaciones transaccionales (POST).</p>
+<pre><code># write_heavy_test.py
+from locust import HttpUser, task, between
+from common.users import DoctorUser, PatientUser, InstitutionUser
+import common.reporting
+
+# Se modifican los pesos para forzar tareas de escritura (80%)
+# como create_doctor o create_patient masivamente.
 </code></pre>
   </section>
 
@@ -171,85 +178,87 @@ class WriteHeavyUser(HttpUser):
     </p>
 
     <h3>6.1 Escenario A: Read-Heavy (Resultados)</h3>
-    <p>En este escenario, el sistema mostró su mejor desempeño, aprovechando la rapidez de las lecturas simples.</p>
+    <p>El sistema mostró una estabilidad total, procesando casi 3,000 peticiones sin un solo error.</p>
     
-    <h4>Métricas Clave (read_stats.csv)</h4>
+    <h4>Métricas Clave (read_heavy.csv)</h4>
     <table>
       <tr><th>Métrica</th><th>Valor</th></tr>
-      <tr><td>RPS Promedio</td><td>145.6</td></tr>
-      <tr><td>Tiempo Respuesta (p95)</td><td>28 ms</td></tr>
-      <tr><td>Tasa de Error</td><td>0.0%</td></tr>
+      <tr><td>Total Peticiones</td><td>2,874</td></tr>
+      <tr><td>RPS Promedio</td><td>9.6</td></tr>
+      <tr><td>Tasa de Error</td><td>0.00%</td></tr>
+      <tr><td>Tiempo Respuesta (p95)</td><td>15 ms</td></tr>
     </table>
 
     <h4>Gráficas Read-Heavy</h4>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div>
-            <img src="img/readwrite/read_fig1.png" alt="Tiempos de respuesta Read">
-            <div class="img-caption">Fig 1A. Latencia estable y baja (Read).</div>
+            <img src="img/readheavy/figura1.png" alt="Tiempos de respuesta Read">
+            <div class="img-caption">Figura 1: Tiempos de respuesta (ms) a lo largo del tiempo.</div>
         </div>
         <div>
-            <img src="img/readwrite/read_fig2.png" alt="RPS Read">
-            <div class="img-caption">Fig 2A. Alto volumen de peticiones por segundo.</div>
+            <img src="img/readheavy/figura2.png" alt="RPS Read">
+            <div class="img-caption">Figura 2: Peticiones por segundo (RPS) en relación con los usuarios concurrentes.</div>
         </div>
         <div>
-            <img src="img/readwrite/read_fig3.png" alt="Éxitos Read">
-            <div class="img-caption">Fig 3A. Tasa de éxitos constante.</div>
+            <img src="img/readheavy/figura3.png" alt="Éxitos Read">
+            <div class="img-caption">Figura 3: Conteo de éxitos de las peticiones por segundo (RPS) a lo largo del tiempo.</div>
         </div>
         <div>
-            <img src="img/readwrite/read_fig4.png" alt="Fallos Read">
-            <div class="img-caption">Fig 4A. Ausencia de errores.</div>
+            <img src="img/readheavy/figura4.png" alt="Fallos Read">
+            <div class="img-caption">Figura 4: Tasa de fallos a lo largo del tiempo.</div>
         </div>
     </div>
 
     <h3>6.2 Escenario B: Write-Heavy (Resultados)</h3>
-    <p>Al invertir la carga hacia la escritura, se observó una degradación esperada en el rendimiento debido al costo transaccional.</p>
+    <p>Al forzar la escritura masiva, el sistema comenzó a rechazar peticiones por duplicidad, lo cual afectó las métricas de rendimiento.</p>
 
-    <h4>Métricas Clave (write_stats.csv)</h4>
+    <h4>Métricas Clave (write_heavy.csv)</h4>
     <table>
       <tr><th>Métrica</th><th>Valor</th></tr>
-      <tr><td>RPS Promedio</td><td>42.3</td></tr>
-      <tr><td>Tiempo Respuesta (p95)</td><td>185 ms</td></tr>
-      <tr><td>Tasa de Error</td><td>1.2% (Conflictos 409)</td></tr>
+      <tr><td>Total Peticiones</td><td>3,060</td></tr>
+      <tr><td>RPS Promedio</td><td>10.2</td></tr>
+      <tr><td>Tasa de Error</td><td>44.7% (1,368 Fallos)</td></tr>
+      <tr><td>Tiempo Respuesta (p95)</td><td>1,290 ms (Alto)</td></tr>
     </table>
 
     <h4>Gráficas Write-Heavy</h4>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div>
-            <img src="img/readwrite/write_fig1.png" alt="Tiempos de respuesta Write">
-            <div class="img-caption">Fig 1B. Latencia variable y más alta (Write).</div>
+            <img src="img/writeheavy/figura1.png" alt="Tiempos de respuesta Read">
+            <div class="img-caption">Figura 1: Tiempos de respuesta (ms) a lo largo del tiempo.</div>
         </div>
         <div>
-            <img src="img/readwrite/write_fig2.png" alt="RPS Write">
-            <div class="img-caption">Fig 2B. RPS significativamente menor.</div>
+            <img src="img/writeheavy/figura2.png" alt="RPS Read">
+            <div class="img-caption">Figura 2: Peticiones por segundo (RPS) en relación con los usuarios concurrentes.</div>
         </div>
         <div>
-            <img src="img/readwrite/write_fig3.png" alt="Éxitos Write">
-            <div class="img-caption">Fig 3B. Flujo de éxitos más lento.</div>
+            <img src="img/writeheavy/figura3.png" alt="Éxitos Read">
+            <div class="img-caption">Figura 3: Conteo de éxitos de las peticiones por segundo (RPS) a lo largo del tiempo.</div>
         </div>
         <div>
-            <img src="img/readwrite/write_fig4.png" alt="Fallos Write">
-            <div class="img-caption">Fig 4B. Aparición de errores de validación.</div>
+            <img src="img/writeheavy/figura4.png" alt="Fallos Read">
+            <div class="img-caption">Figura 4: Tasa de fallos a lo largo del tiempo.</div>
         </div>
     </div>
 
-    <h3>6.3 Análisis Detallado y Comparativa</h3>
+    <h3>6.3 Análisis Comparativo y Hallazgos</h3>
     
     <div class="alert-info">
-      <strong>Hallazgo Principal:</strong> El sistema es 3.4 veces más rápido leyendo que escribiendo.
+      <strong>Paradoja del RPS:</strong> Aunque el escenario Write-Heavy tuvo un RPS mayor (10.2 vs 9.6), esto es engañoso. El alto RPS en escritura se debe a que el servidor rechazaba rápidamente las peticiones (Error 409 Conflict), lo cual consume menos recursos que procesar una transacción exitosa.
     </div>
 
     <ul>
       <li>
-        <strong>Degradación del Throughput:</strong> 
-        Pasamos de ~145 RPS en Read-Heavy a ~42 RPS en Write-Heavy. Esto es normal, ya que una inserción en BD implica: validación de constraints, escritura en disco (WAL), actualización de índices y commit de transacción. La lectura, en cambio, suele ser directa o cacheada.
+        <strong>Latencia Crítica en Escritura:</strong> 
+        El tiempo de respuesta (p95) se disparó de <strong>15ms</strong> en lectura a casi <strong>1.3 segundos</strong> en escritura. Esto confirma que la base de datos sufre bloqueos (locks) significativos cuando múltiples usuarios intentan escribir concurrentemente en las mismas tablas.
       </li>
       <li>
-        <strong>Latencia (p95):</strong>
-        El tiempo de respuesta subió de 28ms a 185ms. Esto indica que, bajo concurrencia, los usuarios experimentarán una espera perceptible al guardar datos, aunque sigue estando por debajo de 1 segundo (aceptable).
+        <strong>Integridad de Datos (Errores 409):</strong>
+        La tasa de error del 44.7% en Write-Heavy corresponde a códigos <code>409 CONFLICT</code>. Esto es positivo desde el punto de vista de la integridad de datos: el sistema impidió correctamente la creación de registros duplicados (Doctores/Pacientes con el mismo email/ID), aunque indica que los datos de prueba deben ser más variados para pruebas de escritura sostenidas.
       </li>
       <li>
-        <strong>Integridad de Datos:</strong>
-        En el escenario Write-Heavy aparecieron errores 409 (Conflict). Esto es positivo: significa que el sistema evitó exitosamente la creación de registros duplicados cuando múltiples usuarios intentaron crear el mismo recurso simultáneamente.
+        <strong>Estabilidad de Lectura:</strong>
+        El escenario Read-Heavy demostró que la arquitectura es muy eficiente para consultas, manteniendo tiempos por debajo de 20ms incluso con 50 usuarios concurrentes.
       </li>
     </ul>
 
@@ -259,12 +268,12 @@ class WriteHeavyUser(HttpUser):
     <h2>7. Conclusiones</h2>
     <h3>Diagnóstico del Sistema</h3>
     <p>
-      El sistema PredictHealth está optimizado para cargas de lectura, lo cual es adecuado para su propósito (consulta de expedientes). Sin embargo, el módulo de escritura presenta una latencia mayor que podría requerir atención si se espera un volumen masivo de registros simultáneos.
+      El sistema PredictHealth está altamente optimizado para cargas de lectura, lo cual es adecuado para su propósito principal (consulta de expedientes). Sin embargo, el módulo de escritura presenta una latencia significativa bajo estrés y requiere datos de prueba más dinámicos para evitar colisiones.
     </p>
     <h3>Recomendaciones</h3>
     <ul>
-      <li><strong>Optimización de Escritura:</strong> Revisar los índices en la base de datos. Demasiados índices pueden estar ralentizando los INSERTs.</li>
-      <li><strong>Escalabilidad Asíncrona:</strong> Para cargas Write-Heavy futuras, considerar usar una cola de mensajes (RabbitMQ/Kafka) para procesar las creaciones en segundo plano y no bloquear la respuesta HTTP al usuario.</li>
+      <li><strong>Optimización de Escritura:</strong> Revisar los índices en la base de datos. Demasiados índices pueden estar ralentizando los INSERTs masivos.</li>
+      <li><strong>Datos Dinámicos:</strong> Para futuras pruebas Write-Heavy, implementar un generador de datos aleatorios (librería Faker) en lugar de leer secuencialmente un CSV fijo, para evitar la tasa de error del 44%.</li>
     </ul>
 
     <a href="docs/ejerciciosguiados/ejercicio9/ejercicio9.zip" class="download-button" download>
