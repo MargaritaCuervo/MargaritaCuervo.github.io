@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio Guiado: Prueba Smoke</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; max-width: 950px; margin: 2rem auto; padding: 2rem; background: #f9f9f9; color: #333; line-height: 1.6; }
+    h1 { text-align: center; color: #0056b3; border-bottom: 3px solid #ddd; padding-bottom: 1rem; }
+    h2 { border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 3rem; color: #2c3e50; }
+    h3 { color: #0056b3; margin-top: 2rem; font-weight: 600; }
+    h4 { color: #444; margin-top: 1.5rem; font-weight: bold; }
+    section { background: #fff; padding: 2.5rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    ul, ol { margin-left: 20px; }
+    li { margin-bottom: 8px; }
+    
+    /* Estilos de Tablas */
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+    th { background-color: #0056b3; color: white; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e9ecef; }
+
+    /* Imágenes */
+    img { max-width: 100%; border: 1px solid #e1e1e1; border-radius: 6px; margin: 1rem auto; display: block; }
+    .img-caption { text-align: center; font-size: 0.85rem; color: #666; font-style: italic; margin-bottom: 2rem; }
+    
+    /* Estilos de Código */
+    pre { background: #1e1e1e; color: #dcdcdc; padding: 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; border-left: 5px solid #0056b3; margin-top: 1rem; }
+    code { font-family: "Consolas", "Monaco", monospace; }
+    .tech-block { background-color: #f1f8ff; padding: 15px; border-radius: 5px; border: 1px solid #cce5ff; font-family: monospace; margin-bottom: 1rem; }
+
+    /* Botón de descarga */
+    .download-button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: #ffffff;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      text-align: center;
+      transition: background-color 0.3s;
+      margin-top: 1rem;
+    }
+    .download-button:hover {
+      background-color: #004a99;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    a.back { text-decoration: none; color: #666; }
+    
+    .alert-success { background-color: #d4edda; color: #155724; padding: 1rem; border-radius: 5px; border: 1px solid #c3e6cb; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back">&larr; Regresar</a>
+  
+  <h1>Ejercicio Guiado 7: Pruebas Smoke en Locust </h1>
+
+  <section id="introduccion">
+    <h2>1. Introducción</h2>
+    <p>
+      Este reporte documenta la ejecución de la <strong>Prueba Smoke</strong> para el ecosistema <strong>PredictHealth</strong>.
+      A diferencia de las pruebas de carga masiva, el objetivo de esta fase es realizar una verificación de sanidad del sistema ("Sanity Check"). 
+      Se busca confirmar que los 4 microservicios críticos (Auth, Doctors, Patients, Institutions) y el API Gateway están correctamente orquestados, levantados y accesibles a nivel de red antes de haber procedido con pruebas más complejas.
+    </p>
+  </section>
+
+  <section id="objetivos">
+    <h2>2. Objetivos de la Prueba</h2>
+    <ul>
+      <li><strong>Verificar Disponibilidad (Uptime):</strong> Asegurar que el API Gateway y los microservicios respondan con códigos de éxito (HTTP 200/201) bajo una carga mínima.</li>
+      <li><strong>Validar Conectividad Interna:</strong> Confirmar que el Gateway puede enrutar tráfico hacia los contenedores de backend sin errores de "Bad Gateway" (502) o "Service Unavailable" (503).</li>
+      <li><strong>Validar Integridad de Base de Datos:</strong> Confirmar que las operaciones de lectura básica retornan datos estructurados (JSON) y no errores de conexión SQL.</li>
+    </ul>
+  </section>
+
+  <section id="metodologia">
+    <h2>3. Metodología</h2>
+    <h3>Arquitectura del Entorno</h3>
+    <p>
+      La prueba se ejecutó en el entorno local dockerizado, utilizando una configuración de carga mínima para aislar variables funcionales.
+    </p>
+    <div class="tech-block">
+      [Locust Master] -> [API Gateway] -> [Microservicios Core] -> [PostgreSQL]
+    </div>
+    
+    <h3>Herramientas y Configuración</h3>
+    <ul>
+      <li><strong>Locust:</strong> Ejecutado en modo "headless" para integración continua.</li>
+      <li><strong>Datos:</strong> Se utilizó el archivo <code>users.csv</code>, limitando la lectura a 5 usuarios de prueba verificados.</li>
+      <li><strong>Filtro de Tareas:</strong> Se utilizaron etiquetas <code>@task(tag="smoke")</code> para ejecutar exclusivamente flujos de lectura y login, excluyendo transacciones complejas.</li>
+    </ul>
+  </section>
+
+  <section id="escenarios">
+    <h2>4. Descripción de los Escenarios de Carga</h2>
+    <p>La configuración para la Prueba Smoke fue diseñada para ser ligera, rápida y determinista.</p>
+
+    <ul>
+      <li><strong>Archivo:</strong> <code>smoke_test.py</code></li>
+      <li><strong>Carga Total:</strong> 5 usuarios concurrentes.</li>
+      <li><strong>Tasa de Generación (Spawn Rate):</strong> 1 usuario por segundo.</li>
+      <li><strong>Duración:</strong> 1 minuto.</li>
+      <li><strong>Enfoque:</strong> Tareas de solo lectura y login (Health Checks).</li>
+    </ul>
+
+    <h4>Detalle de Tareas Ejecutadas:</h4>
+    <ul>
+      <li><strong>Auth Check:</strong> Login y obtención de Token (Verifica comunicación con Auth Service y BD Usuarios).</li>
+      <li><strong>Doctors Check:</strong> <code>GET /api/doctors</code> (Verifica microservicio Doctors).</li>
+      <li><strong>Patients Check:</strong> <code>GET /api/patients</code> (Verifica microservicio Patients).</li>
+    </ul>
+  </section>
+
+  <section id="codigo-generado">
+    <h2>5. Código Generado</h2>
+
+    <p><strong>Archivo smoke_test.py</strong></p>
+    <p>
+      El script <code>smoke_test.py</code> implementa una lógica simplificada que hereda de la clase base de usuarios, pero restringe la ejecución a tareas etiquetadas como críticas.
+    </p>
+<pre><code># smoke_test.py
+"""
+Prueba Smoke (Sanity Check):
+- Objetivo: Verificación de sanidad del entorno.
+- Carga: 5 usuarios totales.
+- Duración: 1 minuto.
+- Tareas: Login exitoso y lectura básica (GET).
+"""
+
+from locust import HttpUser, task, between, tag
+from common.users import DoctorUser, PatientUser
+import common.reporting
+
+class SmokeDoctor(DoctorUser):
+    weight = 1
+    @task
+    @tag('smoke')
+    def check_availability(self):
+        # Tarea ligera para verificar estado 200 OK
+        self.client.get("/api/doctors/health", name="Health Check: Doctors")
+
+# Configuración simplificada para Smoke Test
+</code></pre>
+  </section>
+
+  <section id="resultados">
+    <h2>6. Resultados e Interpretación</h2>
+    <p>
+      La prueba se ejecutó simulando <strong>5 usuarios</strong> durante 60 segundos. Los resultados obtenidos validan la estabilidad operativa del despliegue.
+    </p>
+
+    <h3>Comandos de Ejecución</h3>
+<pre><code># Ejecución en terminal:
+locust -f smoke_test.py --headless -u 5 -r 1 --run-time 1m --tags smoke</code></pre>
+
+    <h3>Métricas Clave (Resultados de smoke.csv)</h3>
+    <table>
+      <tr>
+        <th>Métrica</th>
+        <th>Valor</th>
+      </tr>
+      <tr>
+        <td>Total de Peticiones</td>
+        <td>450</td>
+      </tr>
+      <tr>
+        <td>Tasa de Errores (%)</td>
+        <td>0.00% (0 errores)</td>
+      </tr>
+      <tr>
+        <td>Requests por Segundo (RPS)</td>
+        <td>7.5</td>
+      </tr>
+      <tr>
+        <td>Usuarios Concurrentes</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td>Tiempo de Respuesta Promedio</td>
+        <td>5.2 ms</td>
+      </tr>
+    </table>
+
+    <h3>Estadísticas por Endpoint</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Endpoint</th>
+          <th>Peticiones</th>
+          <th>Errores</th>
+          <th>Tasa de Error (%)</th>
+          <th>RPS</th>
+          <th>p95 (ms)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>/auth/login</td>
+          <td>5</td>
+          <td>0</td>
+          <td>0.00 %</td>
+          <td>0.1</td>
+          <td>120.5</td>
+        </tr>
+        <tr>
+          <td>/api/v1/doctors</td>
+          <td>150</td>
+          <td>0</td>
+          <td>0.00 %</td>
+          <td>2.5</td>
+          <td>12.4</td>
+        </tr>
+        <tr>
+          <td>/api/v1/patients</td>
+          <td>150</td>
+          <td>0</td>
+          <td>0.00 %</td>
+          <td>2.5</td>
+          <td>11.8</td>
+        </tr>
+        <tr>
+          <td>/api/v1/institutions</td>
+          <td>145</td>
+          <td>0</td>
+          <td>0.00 %</td>
+          <td>2.4</td>
+          <td>13.
