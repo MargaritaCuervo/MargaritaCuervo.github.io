@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio Guiado 11: Pruebas Spike</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; max-width: 950px; margin: 2rem auto; padding: 2rem; background: #f9f9f9; color: #333; line-height: 1.6; }
+    h1 { text-align: center; color: #333; border-bottom: 3px solid #ddd; padding-bottom: 1rem; }
+    h2 { border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 3rem; color: #2c3e50; }
+    h3 { color: #0056b3; margin-top: 2rem; font-weight: 600; }
+    h4 { color: #444; margin-top: 1.5rem; font-weight: bold; }
+    section { background: #fff; padding: 2.5rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    ul, ol { margin-left: 20px; }
+    li { margin-bottom: 8px; }
+    
+    /* Estilos de Tablas */
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+    th { background-color: #0056b3; color: white; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e9ecef; }
+
+    /* Imágenes */
+    img { max-width: 100%; border: 1px solid #e1e1e1; border-radius: 6px; margin: 1rem auto; display: block; }
+    .img-caption { text-align: center; font-size: 0.85rem; color: #666; font-style: italic; margin-bottom: 2rem; }
+    
+    /* Estilos de Código */
+    pre { background: #1e1e1e; color: #dcdcdc; padding: 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; border-left: 5px solid #0056b3; margin-top: 1rem; }
+    code { font-family: "Consolas", "Monaco", monospace; }
+    .tech-block { background-color: #f1f8ff; padding: 15px; border-radius: 5px; border: 1px solid #cce5ff; font-family: monospace; margin-bottom: 1rem; }
+
+    /* Botón de descarga */
+    .download-button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: #ffffff;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      text-align: center;
+      transition: background-color 0.3s;
+      margin-top: 1rem;
+    }
+    .download-button:hover {
+      background-color: #004a99;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    a.back { text-decoration: none; color: #666; font-weight: bold; }
+    
+    .alert-info { background-color: #d1ecf1; color: #0c5460; padding: 1rem; border-radius: 5px; border: 1px solid #bee5eb; margin-top: 1rem; }
+    .alert-danger { background-color: #f8d7da; color: #721c24; padding: 1rem; border-radius: 5px; border: 1px solid #f5c6cb; margin-top: 1rem; }
+    .alert-success { background-color: #d4edda; color: #155724; padding: 1rem; border-radius: 5px; border: 1px solid #c3e6cb; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back">&larr; Regresar</a>
+  
+  <h1>Ejercicio Guiado 11: Pruebas Spike en Locust</h1>
+
+  <section id="introduccion">
+    <h2>1. Introducción</h2>
+    <p>
+      En este reporte documentamos la ejecución de una <strong>Prueba Spike</strong>. 
+      A diferencia de las pruebas de carga convencionales o de Ramp-up gradual, una prueba Spike somete al sistema a un incremento de tráfico extremo y casi instantáneo, seguido de una bajada igual de drástica.
+    </p>
+    <p>
+      El objetivo es simular escenarios de "avalancha", para evaluar si la arquitectura de <strong>PredictHealth</strong> colapsa o sobrevive a la presión repentina.
+    </p>
+  </section>
+
+  <section id="objetivos">
+    <h2>2. Objetivos de la Prueba</h2>
+    <ul>
+      <li><strong>Supervivencia del Sistema:</strong> Verificar si el API Gateway y los microservicios siguen operando sin reiniciarse durante un pico de tráfico del 1000% (de 20 a 200 usuarios en segundos).</li>
+      <li><strong>Tiempo de Recuperación:</strong> Medir cuánto tarda el sistema en volver a latencias normales (Baseline) una vez que el pico de tráfico desaparece.</li>
+      <li><strong>Identificar el Eslabón Débil:</strong> Detectar qué componente específico (Auth, BD, Gateway) falla primero ante la saturación súbita.</li>
+    </ul>
+  </section>
+
+  <section id="metodologia">
+    <h2>3. Metodología</h2>
+    <h3>Arquitectura del Entorno de Prueba</h3>
+    <p>
+      Las pruebas se ejecutaron desde una máquina local que actuaba como nodo maestro de Locust, generando tráfico HTTP hacia los servicios desplegados. 
+      Los componentes del sistema (CMS y microservicios) estaban corriendo localmente a través de Docker Compose.
+    </p>
+    <div class="tech-block">
+      [Máquina Local (Locust Master)] -> [Red Local (Docker Network)] -> [Contenedores de CMS y Microservicios] -> [Contenedores de PostgreSQL y Redis]
+    </div>
+    
+    <p>Las URLs base configuradas para cada servicio bajo prueba fueron las siguientes:</p>
+    <ul>
+      <li><strong>CMS:</strong> <code>http://localhost:80</code></li>
+      <li><strong>Servicio Auth-JWT:</strong> <code>http://localhost:5000</code></li>
+      <li><strong>Servicio de Instituciones:</strong> <code>http://localhost:5001</code></li>
+      <li><strong>Servicio de Doctores:</strong> <code>http://localhost:5002</code></li>
+      <li><strong>Servicio de Pacientes:</strong> <code>http://localhost:5003</code></li>
+    </ul>
+
+    <h3>Herramientas Utilizadas</h3>
+    <ul>
+      <li><strong>Locust:</strong> Versión 2.41.6</li>
+      <li><strong>Sistema Operativo:</strong> Windows 11</li>
+      <li><strong>Hardware:</strong> CPU 2 núcleos (4+ recomendado), RAM 4GB (8GB+ recomendado), Almacenamiento 10GB disponible.</li>
+      <li><strong>Infraestructura:</strong> 
+        <ul>
+          <li>Docker (v20.10+) y Docker Compose (v2.0+)</li>
+          <li>Memoria asignada a contenedores: 8GB+ RAM</li>
+        </ul>
+      </li>
+      <li><strong>Backends:</strong> PostgreSQL (v15+), Redis (v6.0+) con soporte para 20+ conexiones simultáneas.</li>
+      <li><strong>Lenguaje:</strong> Python 3.11+</li>
+    </ul>
+  </section>
+
+
+  <section id="escenarios">
+    <h2>4. Descripción de los Escenarios de Carga</h2>
+    <p>
+      Utilizamos un patrón de carga personalizado llamado <strong>"DoubleWaveShape"</strong>. 
+      Este escenario no es lineal; está diseñado para golpear al sistema con dos oleadas consecutivas de alta intensidad.
+    </p>
+
+    <h3>Perfil del Spike (La Doble Ola)</h3>
+    <ol>
+      <li><strong>Valle (Baseline):</strong> Tráfico bajo y constante de 20 usuarios.</li>
+      <li><strong>Spike 1:</strong> Subida repentina a <strong>200 usuarios</strong> concurrentes.</li>
+      <li><strong>Recuperación 1:</strong> Caída inmediata de vuelta a 20 usuarios.</li>
+      <li><strong>Spike 2:</strong> Segunda subida repentina a <strong>200 usuarios</strong> (para probar la fatiga del sistema).</li>
+      <li><strong>Recuperación Final:</strong> Retorno al estado de reposo.</li>
+    </ol>
+  </section>
+
+  <section id="codigo-generado">
+    <h2>5. Código Generado</h2>
+    
+    <p><strong>Archivo shape_spike_test.py</strong></p>
+    <p>
+      El script implementa una clase <code>DoubleWaveShape</code> que calcula matemáticamente (usando funciones seno) el número de usuarios para crear las olas de tráfico.
+    </p>
+<pre><code># shape_spike_test.py
+from locust import HttpUser, task, between, LoadTestShape
+import math
+
+class DoubleWaveShape(LoadTestShape):
+    """
+    Simula un pico doble.
+    Configuración:
+    - Base: 20 usuarios
+    - Pico: 200 usuarios
+    - Duración total: 240 segundos (4 min)
+    """
+    time_limit = 240
+    min_users = 20
+    peak_one_users = 200
+    peak_two_users = 200
+
+    def tick(self):
+        # Lógica matemática para generar la curva de doble ola
+        run_time = self.get_run_time()
+        if run_time > self.time_limit:
+            return None
+            
+        # ... cálculo de users y spawn_rate ...
+        return (round(user_count), round(spawn_rate))
+</code></pre>
+  </section>
+
+  <section id="resultados">
+    <h2>6. Resultados y Análisis Detallado</h2>
+    <p>
+      La prueba tuvo una duración de 4 minutos. El sistema fue sometido a un estrés de 10x su carga normal en cuestión de segundos.
+    </p>
+
+    <h3>Métricas Clave (shape_spike.csv)</h3>
+    <table>
+      <tr><th>Métrica</th><th>Valor</th></tr>
+      <tr><td>Total Peticiones</td><td>4,012</td></tr>
+      <tr><td>Total Fallos</td><td>68</td></tr>
+      <tr><td>Tasa de Error</td><td>1.7%</td></tr>
+      <tr><td>RPS Promedio</td><td>20.1</td></tr>
+      <tr><td>Tiempo Respuesta (p95) - Global</td><td>70 ms</td></tr>
+    </table>
+
+    <h3>Análisis de Fallos por Endpoint</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Endpoint</th>
+          <th>Peticiones</th>
+          <th>Fallos</th>
+          <th>Tasa de Error</th>
+          <th>p95 Latencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>/auth/login</td>
+          <td>220</td>
+          <td>68</td>
+          <td><strong>30.9%</strong></td>
+          <td>1900 ms</td>
+        </tr>
+        <tr>
+          <td>/api/v1/doctors</td>
+          <td>1050</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>16 ms</td>
+        </tr>
+        <tr>
+          <td>/api/v1/patients</td>
+          <td>1080</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>15 ms</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Gráficas de Comportamiento</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <img src="img/spike/figura1.png" alt="Tiempos de respuesta Spike">
+            <div class="img-caption">Figura 1: Tiempos de respuesta (ms) a lo largo del tiempo.</div>
+        </div>
+        <div>
+            <img src="img/spike/figura2.png" alt="RPS Spike">
+            <div class="img-caption">Figura 2: Peticiones por segundo (RPS) en relación con los usuarios concurrentes.</div>
+        </div>
+        <div>
+            <img src="img/spike/figura3.png" alt="Usuarios Spike">
+            <div class="img-caption">Figura 3: Conteo de éxitos de las peticiones por segundo (RPS) a lo largo del tiempo.</div>
+        </div>
+        <div>
+            <img src="img/spike/figura4.png" alt="Fallos Spike">
+            <div class="img-caption">Figura 4: Tasa de fallos a lo largo del tiempo.</div>
+        </div>
+    </div>
+
+    <h3>Interpretación Técnica</h3>
+    
+    <div class="alert-info">
+      <strong>Hallazgo Principal:</strong> El sistema sobrevivió, pero el servicio de autenticación es el cuello de botella.
+    </div>
+
+    <ul>
+      <li>
+        <strong>Resiliencia de Lectura:</strong> 
+        Los microservicios de negocio (Doctores, Pacientes) soportaron el pico de 200 usuarios sin generar un solo error (0% Failures). Esto confirma que la estrategia de usar Redis y contenedores ligeros funciona bien para servir contenido.
+      </li>
+      <li>
+        <strong>Colapso Parcial en Auth:</strong>
+        El endpoint <code>/auth/login</code> falló el 31% de las veces durante el pico. Esto se debe a un fenómeno conocido como "Thundering Herd" (Estampida). Cuando 200 usuarios intentan hashear contraseñas y firmar tokens JWT en el mismo segundo, la CPU del contenedor de Auth se satura, provocando Timeouts (latencias > 1900ms).
+      </li>
+      <li>
+        <strong>Recuperación Exitosa:</strong>
+        Lo más positivo de la prueba es la capacidad de recuperación. En los "valles" (cuando la carga bajó a 20 usuarios), la tasa de error volvió a 0% y la latencia se estabilizó instantáneamente. El sistema no quedó en un estado "zombie" ni requirió reinicio manual.
+      </li>
+    </ul>
+  </section>
+
+  <section id="conclusiones">
+    <h2>7. Conclusiones</h2>
+    <h3>Diagnóstico del Sistema</h3>
+    <p>
+      La arquitectura es elástica y robusta para usuarios ya autenticados. Sin embargo, el proceso de entrada (Login) es frágil ante picos repentinos. Si 200 personas intentan entrar al mismo tiempo, 60 de ellas recibirán un error.
+    </p>
+    <h3>Recomendaciones</h3>
+    <ul>
+      <li><strong>Escalar Servicio de Auth:</strong> Aumentar el número de réplicas del contenedor <code>auth-service</code> (mínimo 3 réplicas) para distribuir la carga de CPU del hashing de contraseñas.</li>
+      <li><strong>Queue de Login:</strong> Implementar un mecanismo de espera o "Rate Limiting" en el API Gateway para suavizar el pico de peticiones de login, evitando que lleguen todas juntas al microservicio.</li>
+    </ul>
+
+    <a href="docs/ejerciciosguiados/ejercicio11/ejercicio11.zip" class="download-button" download>
+      Descargar Pruebas Spike (.zip)
+    </a>
+  </section>
+
+</body>
+</html>
