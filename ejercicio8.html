@@ -256,44 +256,80 @@ locust -f smoke_test.py --headless -u 5 -r 1 --run-time 1m --tags smoke</code></
 
     <h3>Gráficas Generadas por Locust</h3>
     
-    <img src="img/smoke/figura1.png" alt="Tiempos de respuesta - Smoke">
-    <div class="img-caption">Figura 1: Tiempos de respuesta planos y bajos (<20ms) indican ausencia de latencia estructural.</div>
+    <img src="img/smoke/figura1.png" alt="Tiempos de respuesta">
+    <div class="img-caption">Figura 1: Tiempos de respuesta (ms) a lo largo del tiempo.</div>
 
-    <img src="img/smoke/figura4.png" alt="Tasa de fallos - Smoke">
-    <div class="img-caption">Figura 2: La ausencia total de barras rojas confirma disponibilidad del 100%.</div>
+    <img src="img/smoke/figura2.png" alt="RPS vs Usuarios">
+    <div class="img-caption">Figura 2: Peticiones por segundo (RPS) en relación con los usuarios concurrentes.</div>
 
-    <h3>Interpretación Técnica de Resultados</h3>
-    <div class="alert-success">
-      <strong>Estado: PASSED (0% Errores)</strong>
-    </div>
-    <p>
-      Los resultados de la Prueba Smoke son concluyentes y positivos por las siguientes razones técnicas:
-    </p>
+    <img src="img/smoke/figura3.png" alt="Conteo de éxitos">
+    <div class="img-caption">Figura 3: Conteo de éxitos de las peticiones por segundo (RPS) a lo largo del tiempo.</div>
+
+    <img src="img/smoke/figura4.png" alt="Tasa de fallos">
+    <div class="img-caption">Figura 4: Tasa de fallos a lo largo del tiempo.</div>
+
+    <h3>Desglose Detallado de Resultados</h3>
+
+    <p>El resultado de la Prueba Smoke fue un éxito rotundo y cumplió todos sus criterios de aceptación.</p>
+
+    <h4>1. Cumplimiento de Criterios de Aceptación</h4>
     <ul>
       <li>
-        <strong>Validación de Gateway:</strong> El hecho de tener 0 errores en 450 peticiones confirma que el API Gateway está enrutando correctamente el tráfico hacia los contenedores internos. No hubo errores 502, lo que suele ocurrir cuando el Gateway no encuentra el microservicio.
+        <strong>Criterio de Errores (0-0.5%):</strong> Se obtuvo una tasa de error del <strong>0.00%</strong>. Esto es una mejora significativa respecto a pruebas anteriores y confirma que los 15 usuarios utilizados para esta prueba tenían credenciales válidas en <code>users.csv</code>.
       </li>
       <li>
-        <strong>Conectividad de Base de Datos:</strong> Las peticiones a <code>/api/v1/doctors</code> retornaron éxito (200 OK) con una latencia de 12.4ms. Esto implica que el microservicio de Doctores pudo abrir conexión con PostgreSQL, ejecutar la consulta y devolver el JSON en tiempo real.
+        <strong>Criterio de Latencia (p95 < 1s):</strong> El p95 fue de <strong>6.69 ms</strong>, lo cual es miles de veces más rápido que el límite establecido de 1 segundo, indicando una respuesta casi inmediata de la red interna.
+      </li>
+    </ul>
+
+    <h4>2. Respuesta a los Objetivos Planteados</h4>
+    <ul>
+      <li>
+        <strong>"Verificar disponibilidad de endpoints críticos":</strong> Se confirmó que <code>/auth/login</code> y los endpoints <code>/health</code> de los servicios están en línea y responden correctamente.
       </li>
       <li>
-        <strong>Latencia Basal:</strong> El tiempo de respuesta promedio de 5.2ms establece una excelente línea base. Cualquier latencia superior a esto en pruebas futuras será atribuible puramente a la carga (queuing) y no a problemas de red.
+        <strong>"Confirmar configuración/credenciales":</strong> El 0% de error en el login valida que la configuración del CSV feeder y las credenciales de prueba son correctas y están sincronizadas con la base de datos.
       </li>
+      <li>
+        <strong>"Verificar lecturas básicas y CRUD":</strong> 
+        <div class="alert-warning" style="display: inline-block; width: 95%; margin-top: 5px;">
+          <em>Nota:</em> Este objetivo específico no se cumplió totalmente porque la configuración de la prueba (flag <code>-T smoke</code>) limitó la ejecución solo a los endpoints <code>/health</code>. Los flujos completos de CRUD no fueron probados en esta fase.
+        </div>
+      </li>
+    </ul>
+
+    <h4>3. Análisis de Latencia (p95 vs p99)</h4>
+    <p>
+      Se observa una gran diferencia entre el p95 (6.69 ms) y el p99 (264.77 ms). Esto se explica por la naturaleza de las peticiones:
+    </p>
+    <ul>
+      <li><strong>El p95 (6.69 ms):</strong> Está dominado por las peticiones a <code>/health</code>, que son extremadamente rápidas ya que generalmente no realizan consultas complejas a la base de datos.</li>
+      <li><strong>El p99 (264.77 ms):</strong> Captura las peticiones más lentas, que en este caso corresponden a <code>/auth/login</code>. Esta operación es computacionalmente más costosa debido al hashing de contraseñas y generación de tokens JWT, lo cual justifica el incremento en tiempo.</li>
     </ul>
   </section>
 
   <section id="conclusiones">
-    <h2>7. Conclusiones</h2>
+    <h2>7. Conclusiones y Recomendaciones</h2>
 
-    <h3>Estado del Sistema</h3>
+    <h3>7.1 Conclusiones</h3>
     <p>
-      El entorno de despliegue de <strong>PredictHealth</strong> ha demostrado estar <strong>operativo y estable</strong>. La arquitectura de contenedores pasó todas las verificaciones de sanidad sin registrar incidentes ni caídas de servicio.
+      El sistema <strong>PredictHealth</strong> es estable a nivel de conectividad y autenticación.
     </p>
+    <ul>
+      <li>La infraestructura de contenedores está correctamente orquestada; el API Gateway enruta el tráfico sin pérdidas (0 errores).</li>
+      <li>La integridad de los datos de prueba (usuarios) ha sido validada, solucionando los problemas de "Unauthorized" vistos en iteraciones pasadas.</li>
+      <li>El sistema cumple sobradamente con los requisitos de latencia para operaciones de verificación de estado.</li>
+    </ul>
 
-    <h3>Implicaciones para el Proyecto</h3>
-    <p>
-      La ejecución exitosa de esta prueba Smoke sirvió como un "Quality Gate" (Compuerta de Calidad). Al haber obtenido un 100% de disponibilidad, confirmamos que el entorno estaba correctamente configurado para soportar las pruebas de carga subsiguientes que ya se realizaron. Esta prueba certifica que la infraestructura base es sólida.
-    </p>
+    <h3>7.2 Recomendaciones</h3>
+    <ul>
+      <li>
+        <strong>Proceder a Pruebas de Carga:</strong> Dado el éxito de esta prueba, se autoriza el inicio de la Prueba Baseline completa y pruebas de estrés.
+      </li>
+      <li>
+        <strong>Ampliar Scope de Smoke:</strong> Para futuras ejecuciones de Smoke, se recomienda incluir al menos una operación de lectura de datos real (ej. <code>GET /doctors</code>) además del <code>/health</code>, para cubrir el objetivo de "Verificar lecturas básicas" que quedó pendiente en esta ejecución.
+      </li>
+    </ul>
 
     <a href="docs/ejerciciosguiados/smoke/smoke_test.zip" class="download-button" download>
       Descargar Paquete de Pruebas Smoke (.zip)
