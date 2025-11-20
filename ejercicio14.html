@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio Guiado 14: Pruebas CSV Feeder</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; max-width: 950px; margin: 2rem auto; padding: 2rem; background: #f9f9f9; color: #333; line-height: 1.6; }
+    h1 { text-align: center; color: #333; border-bottom: 3px solid #ddd; padding-bottom: 1rem; }
+    h2 { border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 3rem; color: #2c3e50; }
+    h3 { color: #0056b3; margin-top: 2rem; font-weight: 600; }
+    h4 { color: #444; margin-top: 1.5rem; font-weight: bold; }
+    section { background: #fff; padding: 2.5rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    ul, ol { margin-left: 20px; }
+    li { margin-bottom: 8px; }
+    
+    /* Estilos de Tablas */
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+    th { background-color: #0056b3; color: white; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e9ecef; }
+
+    /* Estilos de Código */
+    pre { background: #1e1e1e; color: #dcdcdc; padding: 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; border-left: 5px solid #0056b3; margin-top: 1rem; }
+    code { font-family: "Consolas", "Monaco", monospace; }
+    .tech-block { background-color: #f1f8ff; padding: 15px; border-radius: 5px; border: 1px solid #cce5ff; font-family: monospace; margin-bottom: 1rem; }
+
+    /* Botón de descarga */
+    .download-button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: #ffffff;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      text-align: center;
+      transition: background-color 0.3s;
+      margin-top: 1rem;
+    }
+    .download-button:hover {
+      background-color: #004a99;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    a.back { text-decoration: none; color: #666; font-weight: bold; }
+    
+    .alert-info { background-color: #d1ecf1; color: #0c5460; padding: 1rem; border-radius: 5px; border: 1px solid #bee5eb; margin-top: 1rem; }
+    .alert-danger { background-color: #f8d7da; color: #721c24; padding: 1rem; border-radius: 5px; border: 1px solid #f5c6cb; margin-top: 1rem; }
+    .alert-success { background-color: #d4edda; color: #155724; padding: 1rem; border-radius: 5px; border: 1px solid #c3e6cb; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back">&larr; Regresar</a>
+  
+  <h1>Ejercicio Guiado 14: Pruebas CSV Feeder en Locust</h1>
+
+  <section id="introduccion">
+    <h2>1. Introducción</h2>
+    <p>
+      En este reporte analizamos la prueba de <strong>CSV Feeder (Alimentador de Datos)</strong>. 
+      A diferencia de las pruebas de carga anteriores que se enfocaban en el estrés del servidor, esta prueba se centra en la validación de la <strong>integridad de los datos de prueba</strong>.
+      Utilizamos usuarios reales simulados para verificar que las credenciales almacenadas en nuestro archivo de control (CSV) coincidan perfectamente con los registros poblados en la base de datos, un paso crítico para garantizar la validez de cualquier prueba de rendimiento subsecuente.
+    </p>
+  </section>
+
+  <section id="objetivos">
+    <h2>2. Objetivos de la Prueba</h2>
+    <ul>
+      <li>Validar la capacidad del servicio de autenticación (/auth/login) para manejar logins concurrentes con credenciales únicas.</li>
+      <li>Medir la tasa de error de sincronización entre los datos de prueba (users.csv) y la base de datos poblada (populate.sql).</li>
+      <li>Registrar la latencia y tasa de peticiones de los logins exitosos.</li>
+    </ul>
+  </section>
+
+  <section id="metodologia">
+    <h2>3. Metodología</h2>
+    <h3>Arquitectura del Entorno</h3>
+    <p>
+      La prueba utiliza el entorno estándar dockerizado, pero se enfoca en el flujo de inicialización de sesión.
+    </p>
+    <div class="tech-block">
+      [Locust (CSV Reader)] -> [API Gateway] -> [Auth Service] -> [PostgreSQL Users DB]
+    </div>
+
+    <h3>Herramientas Utilizadas</h3>
+    <ul>
+      <li><strong>Locust:</strong> Versión 2.41.6</li>
+      <li><strong>Sistema Operativo:</strong> Windows 11</li>
+      <li><strong>Hardware:</strong> CPU 2 núcleos (4+ recomendado), RAM 4GB (8GB+ recomendado), Almacenamiento 10GB disponible.</li>
+      <li><strong>Infraestructura:</strong> 
+        <ul>
+          <li>Docker (v20.10+) y Docker Compose (v2.0+)</li>
+          <li>Memoria asignada a contenedores: 8GB+ RAM</li>
+        </ul>
+      </li>
+      <li><strong>Backends:</strong> PostgreSQL (v15+), Redis (v6.0+) con soporte para 20+ conexiones simultáneas.</li>
+      <li><strong>Lenguaje:</strong> Python 3.11+</li>
+    </ul>
+  </section>
+
+  <section id="escenarios">
+    <h2>4. Descripción de los Escenarios de Carga</h2>
+    <p>
+      Esta prueba es un proceso de dos pasos diseñado para cumplir con los requisitos de integridad de datos del proyecto:
+    </p>
+
+    <h3>Paso 1: Poblar la Base de Datos</h3>
+    <p>
+      Antes de la ejecución, se utilizó un script auxiliar (<code>populate.sql</code>) para registrar masivamente más de 300 usuarios en la base de datos de PostgreSQL. 
+      Este script inserta los datos del usuario y una contraseña ya hasheada (ej. con bcrypt) para simular un entorno de producción real.
+    </p>
+
+    <h3>Paso 2: Simular Logins</h3>
+    <p>
+      Durante la ejecución de las pruebas (analizado aquí usando los datos de la Prueba Soak), Locust utiliza el archivo <code>users.csv</code> que contiene las contraseñas en texto plano. 
+      Cada usuario virtual de Locust lee un par de <code>(email, contraseña)</code> del CSV e intenta autenticarse contra el endpoint <code>/auth/login</code>.
+    </p>
+    <p>
+      <strong>El objetivo es medir la fricción entre estos dos pasos:</strong> ¿coinciden los datos del CSV con los datos de la base de datos?
+    </p>
+  </section>
+
+  <section id="codigo-generado">
+    <h2>5. Código Generado</h2>
+    
+    <h3>Paso 1: Poblar la Base de Datos (Script Auxiliar)</h3>
+    <p>Se utilizó el script <code>populate.sql</code> para insertar los usuarios en la base de datos.</p>
+<pre><code>-- populate.sql (Fragmento):
+-- =============================================
+-- POPULATE DATABASE - 100 INSTITUTIONS, DOCTORS, PATIENTS
+-- =============================================
+...
+-- User: leonor.olivera.1953@grupo.com
+-- Password (plain text): [SECRETO]
+INSERT INTO users (id, email, password_hash, user_type, ...)
+VALUES (..., 'leonor.olivera.1953@grupo.com', '$2b$12$WBT6Ul/vbW2o/fWen/VfjOCqK...', ...);
+
+-- User: gabino.aguirre.1951@cabrera.com
+-- Password (plain text): [SECRETO]
+INSERT INTO users (id, email, password_hash, user_type, ...)
+VALUES (..., 'gabino.aguirre.1951@cabrera.com', '$2b$12$f06yYKY5F5VT0i6iVxzwLu...', ...);
+...</code></pre>
+
+    <h3>Paso 2: Ejecutar Pruebas (Locust y users.csv)</h3>
+    <p>Locust lee el <code>users.csv</code> para obtener las credenciales en texto plano que coinciden con los usuarios poblados.</p>
+<pre><code># users.csv (Fragmento):
+id,password,email
+163749fb-8b46-4447-a8b7-95b4a59531b6,Hkfx0Igv_5M(,contacto@despacho-grijalva...
+83b74179-f6ef-4219-bc70-c93f4393a350,gj6hdu&2k%(F,contacto@laboratorios-saldivar...
+</code></pre>
+
+    <div class="alert-info">
+      <strong>Nota Técnica:</strong> La lógica de conexión que lee el <code>users.csv</code> y ejecuta la función <code>login()</code> se encuentra implementada en el archivo <code>common/users.py</code>. 
+      Este es un módulo central importado por todos los scripts y no se incluye aquí para evitar duplicidad.
+    </div>
+  </section>
+
+  <section id="resultados">
+    <h2>6. Resultados e Interpretación</h2>
+    
+    <h3>Métricas de Autenticación (Extraídas de la Prueba Soak)</h3>
+    <p>
+      Los siguientes datos se extrajeron de la Prueba Soak (30 minutos, 90 usuarios), ya que proporciona la muestra estadística más grande de intentos de login.
+      Para esta prueba, la métrica principal es el rendimiento del endpoint de autenticación.
+    </p>
+
+    <h4>Estadísticas del Endpoint de Autenticación</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Endpoint</th>
+          <th>Peticiones</th>
+          <th>Errores</th>
+          <th>Tasa de Error (%)</th>
+          <th>RPS</th>
+          <th>p50 (ms)</th>
+          <th>p95 (ms)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>/auth/login</td>
+          <td>824</td>
+          <td>61</td>
+          <td>7.40%</td>
+          <td>0.46</td>
+          <td>614.96</td>
+          <td>868.52</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Interpretación de los Resultados</h3>
+    
+    <div class="alert-warning">
+      <strong>Hallazgo Crítico: Discrepancia de Datos Detectada.</strong>
+    </div>
+
+    <p>
+      Esta "prueba" fue la más crítica de todo el reporte, ya que identificó exitosamente la causa raíz de la mayoría de los errores vistos en las otras pruebas.
+    </p>
+
+    <ul>
+      <li>
+        <strong>Objetivo 1 (Logins Concurrentes):</strong>
+        El sistema procesó <strong>824 inicios de sesión únicos</strong> de forma concurrente.
+        La latencia de los logins exitosos es aceptable con un <strong>p95 de 868.52 ms</strong>. El login es una operación lenta por diseño (debido al hash de la contraseña), por lo que un valor por debajo de 1 segundo es un buen resultado funcional.
+      </li>
+      <li>
+        <strong>Objetivo 2 (Sincronización de Datos):</strong>
+        El hallazgo clave es la <strong>tasa de error del 7.40%</strong> en <code>/auth/login</code>. 
+        Esto significa que 61 de los 824 intentos de login fallaron.
+        <br><em>Diagnóstico:</em> Los archivos <code>populate.sql</code> (que pobla la BD) y <code>users.csv</code> (que usa Locust) no están perfectamente sincronizados. Existe un 7.40% de usuarios en el CSV que no existen en la base de datos o cuyas contraseñas no coinciden.
+      </li>
+      <li>
+        <strong>Objetivo 3 (Tasas de Login):</strong>
+        Se registró una tasa de login sostenida de <strong>0.46 RPS</strong> (o aprox. 27 logins por minuto) durante la prueba Soak. 
+        La lógica <code>on_start</code> (implementada en common/users.py) garantiza que cada usuario obtenga su propio token, cumpliendo el objetivo de no reutilizar tokens.
+      </li>
+    </ul>
+
+  </section>
+
+  <section id="conclusiones">
+    <h2>7. Conclusiones y Recomendaciones</h2>
+    <h3>Diagnóstico de Datos</h3>
+    <p>
+      La prueba ha sido exitosa en su propósito de validación: ha revelado que nuestros datos de prueba tienen un 92.6% de integridad, pero ese 7.4% de error es suficiente para generar ruido en las pruebas de carga.
+    </p>
+    <h3>Acciones Recomendadas</h3>
+    <ul>
+      <li><strong>Sincronización Inmediata:</strong> Regenerar el archivo <code>users.csv</code> extrayendo los datos directamente de la base de datos de prueba después de ejecutar el script <code>populate.sql</code>, para asegurar una coincidencia del 100%.</li>
+      <li><strong>Limpieza de Pruebas:</strong> Antes de la certificación final, se debe asegurar que la tasa de error en Login sea 0% para no enmascarar problemas reales de rendimiento.</li>
+    </ul>
+
+    <a href="docs/ejerciciosguiados/ejercicio14/ejercicio14.zip" class="download-button" download>
+      Descargar Pruebas CSV Feeder (.zip)
+    </a>
+  </section>
+
+</body>
+</html>
