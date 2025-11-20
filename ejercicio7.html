@@ -178,7 +178,6 @@
     <h2>4. Descripción de los Escenarios de Carga</h2>
     <p>A continuación, detallamos la configuración específica utilizada para la prueba Baseline.</p>
 
-    <h3>Prueba Baseline</h3>
     <ul>
       <li><strong>Archivo:</strong> <code>baseline_test.py</code></li>
       <li><strong>Comportamiento General:</strong> La prueba se configuró para simular <strong>150 usuarios concurrentes en total</strong>, divididos equitativamente según las variables de entorno:
@@ -206,7 +205,6 @@
   <section id="codigo-generado">
     <h2>5. Código Generado</h2>
 
-    <h3>Prueba Baseline</h3>
     <p><strong>Archivo baseline_test.py</strong></p>
     <p>
       El script baseline_test.py se encarga de definir el comportamiento de los usuarios. Importa clases de usuarios (DoctorUser, PatientUser, InstitutionUser) de un módulo común, permitiendo que cada tipo de usuario ejecute tareas específicas para sus respectivos microservicios.
@@ -428,13 +426,8 @@ DOCTORS=50 PATIENTS=50 INSTITUTIONS=50 locust -f baseline_test.py --headless -r 
       <li><strong>Manejo de Tokens:</strong> Revisar el script de Locust para asegurar que, si el login falla, el usuario no intente ejecutar tareas posteriores que requieran token, evitando así la cascada de errores 401.</li>
     </ul>
 
-    <div style="margin-top: 2rem; padding: 1rem; background-color: #e9ecef; border-radius: 5px;">
-      <strong>Nota sobre Archivos Adjuntos:</strong><br>
-      El archivo <code>users.csv</code> utilizado para la parametrización de usuarios se incluye dentro del archivo comprimido ZIP a continuación.
-    </div>
-
-    <a href="archivos/Ejercicio7-Baseline.zip" class="btn-download">
-      Descargar Paquete de Pruebas Baseline (.zip)
+    <a href="docs/ejerciciosguiados/ejercicio7/ejercicio7baseline.zip" class="download-button" download>
+      Descargar Pruebas Baseline (.zip)
     </a>
   </section>
 
