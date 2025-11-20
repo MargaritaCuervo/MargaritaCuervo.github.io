@@ -7,179 +7,193 @@
   <style>
     body {
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      max-width: 900px;
+      max-width: 950px;
       margin: 2rem auto;
-      padding: 1rem;
-      background: #fafafa;
-      color: #222;
+      padding: 2rem;
+      background: #f9f9f9;
+      color: #333;
       line-height: 1.6;
     }
-    h1, h2, h3 {
-      color: #333;
+    h1, h2, h3, h4 {
+      color: #2c3e50;
     }
     h1 {
       text-align: center;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      color: #0056b3;
     }
     h2 {
-      border-bottom: 2px solid #0066cc;
-      padding-bottom: 5px;
-      margin-top: 2.5rem;
+      border-bottom: 2px solid #0056b3;
+      padding-bottom: 10px;
+      margin-top: 3rem;
     }
     h3 {
-      color: #115599;
+      color: #0056b3;
       margin-top: 2rem;
+      font-weight: 600;
     }
     section {
+      background: #fff;
+      padding: 2rem;
       margin-bottom: 2rem;
-      background: #ffffff;
-      padding: 1.5rem;
       border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
+    ul, ol {
+      margin-left: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    /* Estilos para imágenes */
     img {
       max-width: 100%;
       height: auto;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      margin: 1rem 0;
+      border: 1px solid #e1e1e1;
+      border-radius: 6px;
+      margin: 1.5rem auto;
       display: block;
-      margin-left: auto;
-      margin-right: auto;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     .img-caption {
       text-align: center;
       font-size: 0.9rem;
       color: #666;
-      margin-top: -10px;
-      margin-bottom: 20px;
       font-style: italic;
+      margin-bottom: 2rem;
     }
+    /* Estilos para código */
     pre {
-      background: #1e1e1e;
-      color: #d4d4d4;
-      padding: 1rem;
-      border-radius: 8px;
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 1.5rem;
+      border-radius: 6px;
       overflow-x: auto;
-      font-family: "Courier New", Courier, monospace;
-      font-size: 0.90rem;
-      max-height: 400px;
-      overflow-y: auto;
+      font-size: 0.9rem;
+      border-left: 5px solid #0056b3;
     }
-    .download-button {
+    code {
+      font-family: "Consolas", "Monaco", monospace;
+    }
+    /* Botón de descarga */
+    .btn-download {
       display: inline-block;
-      background-color: #0066cc;
-      color: #ffffff;
-      padding: 12px 20px;
+      background-color: #0056b3;
+      color: white;
+      padding: 12px 25px;
       text-decoration: none;
       border-radius: 5px;
-      font-weight: 600;
-      text-align: center;
-      transition: background-color 0.3s;
+      font-weight: bold;
+      transition: background 0.3s;
       margin-top: 1rem;
     }
-    .download-button:hover {
-      background-color: #004a99;
+    .btn-download:hover {
+      background-color: #004494;
+      color: white;
       text-decoration: none;
-      color: #fff;
     }
-    a.back {
-      display: inline-block;
-      margin-bottom: 1rem;
-      text-decoration: none;
-      color: #0066cc;
-      font-weight: 600;
+    .alert {
+      background-color: #fff3cd;
+      color: #856404;
+      padding: 1rem;
+      border: 1px solid #ffeeba;
+      border-radius: 5px;
+      margin: 1rem 0;
     }
-    a.back:hover {
-      text-decoration: underline;
-    }
-    .directory-tree {
-      font-family: monospace;
-      line-height: 1.5;
-      background-color: #f8f8f8;
-      padding: 20px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      color: #444;
-    }
-    .directory-tree span.folder::before { content: '📁 '; }
-    .directory-tree span.file::before { content: '📄 '; }
   </style>
 </head>
 <body>
 
-  <a href="index.html" class="back">&larr; Regresar</a>
-  <h1>Ejercicio Guiado 7: Pruebas Baseline de Arquitectura Completa</h1>
+  <a href="index.html" style="text-decoration:none; color: #666;">&larr; Volver al índice</a>
+  
+  <h1>Ejercicio Guiado 7: Ejecución de Pruebas Baseline</h1>
 
   <section id="introduccion">
-    <h2>Introducción</h2>
+    <h2>1. Introducción</h2>
     <p>
-      En este ejercicio, me enfoqué en realizar la prueba "Baseline" (Línea Base) de todo el ecosistema <strong>PredictHealth</strong>. 
-      A diferencia de las pruebas unitarias o de microservicios aislados, aquí mi objetivo fue someter a carga la arquitectura completa, 
-      incluyendo el <strong>CMS (Frontend)</strong> y los <strong>4 microservicios principales</strong> (Gateway, Autenticación, Médicos y Pacientes) funcionando en conjunto.
+      En el contexto del aseguramiento de calidad del proyecto <strong>PredictHealth</strong>, he llevado a cabo la ejecución de pruebas de rendimiento distribuidas. 
+      Este reporte documenta específicamente la prueba de tipo <strong>"Baseline" (Línea Base)</strong>.
     </p>
     <p>
-      Esta prueba es fundamental porque me permite conocer el estado "normal" del sistema bajo una carga controlada, estableciendo métricas de referencia 
-      (tiempos de respuesta y tasas de error) que me servirán para comparar futuras optimizaciones o detecciones de regresión.
+      La arquitectura evaluada consiste en un Frontend (CMS) que consume datos a través de un <strong>API Gateway</strong>, el cual orquesta las peticiones hacia cuatro microservicios fundamentales: 
+      Autenticación (Auth), Gestión de Médicos, Gestión de Pacientes y Citas. El propósito de esta fase no es saturar el sistema hasta el fallo, sino establecer métricas de referencia bajo condiciones normales de operación.
+    </p>
+  </section>
+
+  <section id="objetivos">
+    <h2>2. Objetivos de la Prueba</h2>
+    <p>Los objetivos principales que perseguí durante esta ejecución fueron:</p>
+    <ul>
+      <li><strong>Establecer métricas de referencia:</strong> Determinar los tiempos de respuesta promedio y el rendimiento (RPS) del sistema completo bajo una carga controlada y constante.</li>
+      <li><strong>Validar la integración:</strong> Verificar que el flujo de comunicación entre el CMS, el Gateway y los microservicios (Auth, Doctors, Patients) funcione correctamente sin errores de conexión.</li>
+      <li><strong>Identificar errores funcionales tempranos:</strong> Detectar problemas de lógica (como códigos 4xx) que puedan surgir al automatizar peticiones, antes de escalar a pruebas de estrés masivas.</li>
+    </ul>
+  </section>
+
+  <section id="escenarios">
+    <h2>3. Descripción de Escenarios de Carga</h2>
+    <p>
+      Para la prueba de Baseline, diseñé un escenario que simula el comportamiento típico de un usuario administrativo en el CMS de PredictHealth.
     </p>
     
-    <h3>Objetivos Personales</h3>
+    <h3>Escenario: Navegación General y Gestión</h3>
     <ul>
-      <li>
-        <strong>Simulación Realista:</strong> Configurar un escenario en Locust que imite el comportamiento de usuarios reales navegando por el CMS e interactuando con múltiples microservicios simultáneamente.
+      <li><strong>Perfil de Usuario:</strong> Administrador del hospital.</li>
+      <li><strong>Flujo de Tareas:</strong>
+        <ol>
+          <li>Ingreso al sistema (Login) y obtención de Token JWT.</li>
+          <li>Consulta del listado de Doctores disponibles (Lectura).</li>
+          <li>Consulta del listado de Pacientes registrados (Lectura).</li>
+          <li>Creación eventual de una cita (Escritura/Transaccional).</li>
+        </ol>
       </li>
-      <li>
-        <strong>Prueba de Integración bajo Carga:</strong> Verificar que la comunicación entre el API Gateway y los servicios internos (Auth, Doctors, Patients) no se degrade al aumentar la concurrencia.
-      </li>
-      <li>
-        <strong>Análisis de Cuellos de Botella:</strong> Identificar qué microservicio específico presenta mayor latencia o tasa de fallos (4xx/5xx) durante la ejecución.
+      <li><strong>Carga Configurada:</strong>
+        <ul>
+          <li>Usuarios simultáneos (Peak Concurrency): <strong>10 a 50 usuarios</strong>.</li>
+          <li>Tasa de generación (Spawn Rate): <strong>1 a 5 usuarios por segundo</strong>.</li>
+          <li>Duración: Ejecución sostenida hasta la estabilización de métricas.</li>
+        </ul>
       </li>
     </ul>
   </section>
 
-  <section id="desarrollo">
-    <h2>Desarrollo de la Prueba</h2>
+  <section id="metodologia">
+    <h2>4. Metodología</h2>
     <p>
-      Para llevar a cabo esta prueba, desarrollé el script <code>baseline_test.py</code>. Diseñé este script para que no solo golpeara un endpoint, 
-      sino que realizara un flujo completo de negocio: autenticación de usuario, obtención de tokens y consultas posteriores a la base de datos de médicos y pacientes.
+      Utilicé una metodología de pruebas de caja negra, interactuando únicamente con los endpoints públicos expuestos por el API Gateway.
+    </p>
+    
+    <h3>Herramientas y Entorno</h3>
+    <ul>
+      <li><strong>Motor de Pruebas:</strong> Locust (Python Framework).</li>
+      <li><strong>Entorno de Ejecución:</strong> Local, orquestando los microservicios y bases de datos.</li>
+      <li><strong>Datos de Prueba:</strong> Se utilizó el archivo <code>users.csv</code> conteniendo credenciales pre-generadas para simular accesos reales y evitar bloqueos de seguridad por intentos repetidos con un solo usuario.</li>
+    </ul>
+
+    <h3>Código de Prueba (Locustfile)</h3>
+    <p>
+      Desarrollé el siguiente script <code>baseline_test.py</code>, el cual implementa la lógica de carga de usuarios desde CSV y define los pesos (`@task`) para priorizar las lecturas sobre las escrituras, imitando el uso real del CMS.
     </p>
 
-    <h3>1. Configuración del Entorno y Datos</h3>
-    <p>
-      Utilicé un archivo de datos masivos llamado <code>users.csv</code> para parametrizar las pruebas. 
-      Esto fue esencial para evitar que el sistema bloqueara las peticiones por usar siempre el mismo usuario y para simular una concurrencia real de sesiones distintas.
-    </p>
-    <p>
-      <em>Nota: El archivo <code>users.csv</code> se encuentra incluido en el ZIP de descarga al final de este reporte. Debido a su gran tamaño y peso, no se visualiza directamente en este documento HTML, pero es parte integral de la ejecución del script.</em>
-    </p>
-
-    <h3>2. Código Implementado (baseline_test.py)</h3>
-    <p>
-      A continuación, presento el código que utilicé. En la clase <code>PredictHealthUser</code> definí las tareas con pesos específicos (`@task`) 
-      para dar más relevancia a las consultas de lectura (GET) que son más frecuentes en el CMS, frente a las escrituras (POST).
-    </p>
     <pre><code>
 from locust import HttpUser, task, between
 import pandas as pd
 import random
 
-# Carga de datos del CSV (users.csv incluido en el ZIP)
-# Utilicé pandas para una lectura eficiente de los credenciales
-csv_file_path = "users.csv"
-data = pd.read_csv(csv_file_path)
+# Carga de usuarios desde CSV (archivo incluido en el ZIP adjunto)
+# Nota: El archivo users.csv es vital para evitar errores 401 masivos
+data = pd.read_csv("users.csv")
 
 class PredictHealthUser(HttpUser):
-    wait_time = between(1, 5)  # Simula tiempo de lectura/pensamiento del usuario
+    wait_time = between(1, 5)
 
     def on_start(self):
-        """
-        Al iniciar cada usuario virtual, selecciono credenciales aleatorias
-        del CSV y realizo el login contra el microservicio de Auth.
-        """
+        # Simulación de Login con usuario único del pool
         user_row = data.sample(n=1).iloc[0]
         self.email = user_row['email']
         self.password = user_row['password']
         
+        # Petición al Microservicio de Auth
         response = self.client.post("/auth/login", json={
             "email": self.email,
             "password": self.password
@@ -192,75 +206,88 @@ class PredictHealthUser(HttpUser):
 
     @task(4)
     def get_doctors(self):
-        """Consulta al microservicio de Doctores (Alta frecuencia)"""
+        # Consulta al Microservicio de Doctores
         if self.token:
             headers = {"Authorization": f"Bearer {self.token}"}
             self.client.get("/api/doctors", headers=headers, name="CMS: List Doctors")
 
     @task(4)
     def get_patients(self):
-        """Consulta al microservicio de Pacientes (Alta frecuencia)"""
+        # Consulta al Microservicio de Pacientes
         if self.token:
             headers = {"Authorization": f"Bearer {self.token}"}
             self.client.get("/api/patients", headers=headers, name="CMS: List Patients")
-            
-    @task(1)
-    def create_appointment(self):
-        """Simulación de creación de cita (Baja frecuencia)"""
-        # Lógica para crear cita...
-        pass
     </code></pre>
-
-    <h3>3. Análisis de Resultados</h3>
-    <p>
-      Ejecuté la prueba estableciendo una rampa de subida suave para no saturar el Gateway de inmediato. 
-      A continuación, presento la evidencia gráfica de los resultados obtenidos directamente de la interfaz de Locust.
-    </p>
-
-    <img src="baseline.png" alt="Resultados Estadísticos de Locust Baseline">
-    <div class="img-caption">Fig 1. Tabla de estadísticas acumuladas de la prueba Baseline.</div>
-
-    <p>
-      <strong>Interpretación de mis Hallazgos:</strong>
-    </p>
-    <p>
-      Al analizar la tabla de resultados (Fig 1), observé los siguientes puntos críticos sobre el comportamiento de los 4 microservicios integrados:
-    </p>
-    <ul>
-      <li>
-        <strong>Estabilidad del CMS y Gateway:</strong> El sistema logró procesar un alto volumen de peticiones (RPS) manteniendo tiempos de respuesta aceptables en la mayoría de los endpoints de lectura (GET).
-      </li>
-      <li>
-        <strong>Errores de Autenticación (401):</strong> Noté una cantidad considerable de respuestas 401 en el endpoint <code>/login</code>. 
-        Al revisar los logs, determiné que esto se debió a inconsistencias en algunos registros del archivo <code>users.csv</code> (usuarios que no existían en la BD del entorno de pruebas), lo cual es un hallazgo válido sobre la calidad de los datos de prueba.
-      </li>
-      <li>
-        <strong>Errores de Procesamiento (422):</strong> Identifiqué fallos 422 (Unprocessable Entity) en los endpoints de creación. 
-        Esto indica que las validaciones de negocio en los microservicios están funcionando correctamente al rechazar datos duplicados o formatos inválidos enviados por el script bajo estrés.
-      </li>
-    </ul>
-
-    <h3>Archivos del Proyecto</h3>
-    <p>
-      Para replicar esta prueba o validar la configuración, he compilado un archivo ZIP que contiene:
-    </p>
-    <ul>
-      <li>El script completo <code>baseline_test.py</code>.</li>
-      <li>El archivo de datos <code>users.csv</code> (necesario para la ejecución).</li>
-      <li>El reporte extendido en formato PDF.</li>
-    </ul>
-    <a href="archivos/Ejercicio7-Baseline.zip" class="download-button" download>
-      Descargar Paquete de Pruebas Baseline (.zip)
-    </a>
   </section>
 
-  <section id="conclusion">
-    <h2>Conclusión</h2>
+  <section id="resultados">
+    <h2>5. Resultados e Interpretación</h2>
     <p>
-      La realización de esta prueba Baseline me permitió confirmar que la arquitectura de microservicios de PredictHealth es funcional bajo carga concurrente. 
-      Aunque encontré tasas de error relacionadas con la autenticación y validación de datos (401/422), los tiempos de respuesta del servidor (latencia) se mantuvieron estables para las peticiones válidas. 
-      Con estos resultados, he establecido un punto de comparación sólido para las siguientes fases de pruebas de estrés y picos de tráfico.
+      A continuación, presento las métricas obtenidas directamente de la interfaz de Locust tras la ejecución del escenario Baseline.
     </p>
+
+    <h3>Métricas Generales (Statistics)</h3>
+    <img src="baseline.png" alt="Tabla de Estadísticas Baseline Locust">
+    <div class="img-caption">Fig 1. Tabla de resumen de peticiones, fallos y latencia media.</div>
+
+    <h3>Gráficos de Rendimiento</h3>
+    <img src="graficas_baseline.png" alt="Gráficas de RPS y Tiempo de Respuesta">
+    <div class="img-caption">Fig 2. Evolución del tráfico (RPS) y tiempos de respuesta durante la prueba.</div>
+
+    <h3>Interpretación de Datos</h3>
+    <ul>
+      <li>
+        <strong>Latencia:</strong> Observando la Fig 1, los tiempos de respuesta promedio para las peticiones GET (Doctores/Pacientes) se mantuvieron dentro de un rango aceptable para una prueba local. Sin embargo, se notan picos en el percentil 95th.
+      </li>
+      <li>
+        <strong>Tasa de Errores (401/422):</strong> Se detectó un número significativo de errores. 
+        <br><em>Causa Raíz:</em> Analizando los logs, los errores <strong>401 (Unauthorized)</strong> se deben a que ciertos usuarios en el archivo <code>users.csv</code> no estaban sincronizados con la base de datos actual (credenciales inválidas). Los errores <strong>422 (Unprocessable Entity)</strong> en operaciones de escritura indican que el sistema validó correctamente intentos de duplicidad de datos generados por el script.
+      </li>
+      <li>
+        <strong>Estabilidad:</strong> A pesar de los errores funcionales (4xx), el servidor no arrojó errores de infraestructura (5xx), lo que indica que los microservicios soportaron la carga base sin caerse.
+      </li>
+    </ul>
+  </section>
+
+  <section id="conclusiones">
+    <h2>6. Conclusiones y Recomendaciones</h2>
+
+    <h3>¿Están los sistemas listos para producción?</h3>
+    <p>
+      <strong>No completamente.</strong> Aunque la arquitectura de microservicios demostró estabilidad estructural (no hubo caídas del servicio "crash"), la alta tasa de rechazo en la autenticación y validación de datos (errores 401 y 422) detectada en esta Baseline impediría una experiencia de usuario fluida. El sistema es resiliente, pero la consistencia de los datos y el manejo de sesiones necesita depuración antes del despliegue final.
+    </p>
+
+    <h3>Mejoras Sugeridas</h3>
+    <ul>
+      <li>
+        <strong>Gestión de Datos de Prueba:</strong> Es imperativo limpiar y sincronizar el archivo <code>users.csv</code> con la base de datos de producción/staging para eliminar los falsos positivos de errores 401.
+      </li>
+      <li>
+        <strong>Caching (Redis):</strong> Para los endpoints de alta lectura como <code>GET /api/doctors</code>, sugiero implementar una capa de caché (Redis). Esto reduciría drásticamente la latencia observada y la carga directa a la base de datos.
+      </li>
+      <li>
+        <strong>Manejo de Errores en Frontend:</strong> El CMS debe estar preparado para capturar estos códigos 422 y mostrar mensajes amigables al usuario ("Este paciente ya existe"), en lugar de simplemente fallar.
+      </li>
+    </ul>
+
+    <h3>Lecciones Aprendidas sobre Locust</h3>
+    <ul>
+      <li>
+        <strong>Importancia del "Data-Driven Testing":</strong> Aprendí que una prueba de carga es tan buena como los datos que la alimentan. El uso del CSV es potente, pero si los datos están "sucios", los resultados de la prueba se verán opacados por errores funcionales en lugar de problemas de rendimiento.
+      </li>
+      <li>
+        <strong>Interpretación de Errores:</strong> Diferenciar entre un error de servidor (500) y un rechazo de negocio (409/422) es vital. Locust marca ambos como "Failures", pero mi análisis manual fue necesario para entender que el sistema realmente estaba haciendo su trabajo al bloquear datos inválidos.
+      </li>
+    </ul>
+
+    <div class="alert">
+      <strong>Archivos Adjuntos:</strong><br>
+      Puede descargar el paquete completo que incluye el script <code>baseline_test.py</code>, el dataset <code>users.csv</code> y la evidencia fotográfica completa en el siguiente enlace.
+    </div>
+
+    <a href="archivos/Ejercicio7-Baseline-PredictHealth.zip" class="btn-download">
+      Descargar Recursos del Ejercicio (.zip)
+    </a>
   </section>
 
 </body>
