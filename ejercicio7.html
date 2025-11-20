@@ -233,64 +233,208 @@ import common.reporting</code></pre>
 50503414-ca6d-4c1a-a34f-18719e2fd555,PG7KqxVm#em1,contacto@trejo-vigil-e-hijos.predicthealth.com</code></pre>
   </section>
 
-  <section id="resultados">
-    <h2>6. Resultados e Interpretación Técnica</h2>
+<section id="resultados">
+    <h2>6. Resultados e Interpretación</h2>
     <p>
-      La prueba se ejecutó durante un periodo sostenido tras alcanzar el pico de 150 usuarios (Ramp-up). A continuación, desglosamos el análisis de las métricas clave.
+      La prueba se ejecutó con el objetivo de cargar <strong>150 usuarios concurrentes</strong> (50 por rol) durante 5 minutos. 
+      Los datos se analizaron directamente desde el archivo <code>baseline.csv</code> generado por Locust.
     </p>
 
-    <h3>6.1 Métricas Generales (Statistics)</h3>
-    <img src="baseline.png" alt="Tabla de estadísticas de Locust">
-    <div class="img-caption">Fig 1. Resumen acumulado. Nótese la diferenciación entre peticiones exitosas (Green) y fallidas (Red).</div>
+    <h3>Comandos de Ejecución</h3>
+    <p>Para replicar esta prueba, se utilizaron los siguientes comandos según el sistema operativo:</p>
+<pre><code># Windows (PowerShell):
+$env:DOCTORS="50"; $env:PATIENTS="50"; $env:INSTITUTIONS="50"; locust -f baseline_test.py --headless -u 150 -r 15 --run-time 5m -E smoke
 
-    <h3>6.2 Análisis de Gráficas de Rendimiento</h3>
-    <img src="graficas_baseline.png" alt="Gráficos de tiempo de respuesta y usuarios">
-    <div class="img-caption">Fig 2. Correlación visual entre carga (Usuarios) y latencia (Tiempo de respuesta).</div>
+# Linux / macOS / Git Bash:
+DOCTORS=50 PATIENTS=50 INSTITUTIONS=50 locust -f baseline_test.py --headless -r 15 --run-time 5m -E smoke</code></pre>
 
-    <p><strong>Interpretación detallada:</strong></p>
+    <h3>Métricas Clave (Resultados de baseline.csv)</h3>
+    <table>
+      <tr>
+        <th>Métrica</th>
+        <th>Total</th>
+      </tr>
+      <tr>
+        <td>Total de Peticiones</td>
+        <td>17,861</td>
+      </tr>
+      <tr>
+        <td>Tasa de Errores (%)</td>
+        <td>5.99% (1,069 errores)</td>
+      </tr>
+      <tr>
+        <td>Requests por Segundo (RPS)</td>
+        <td>59.69</td>
+      </tr>
+      <tr>
+        <td>Usuarios Concurrentes</td>
+        <td>150</td>
+      </tr>
+      <tr>
+        <td>Tiempo de Respuesta (p50)</td>
+        <td>8.19 ms</td>
+      </tr>
+      <tr>
+        <td>Tiempo de Respuesta (p95)</td>
+        <td>48.34 ms</td>
+      </tr>
+      <tr>
+        <td>Tiempo de Respuesta (p99)</td>
+        <td>57.86 ms</td>
+      </tr>
+    </table>
+
+    <h3>Estadísticas por Endpoint</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Endpoint</th>
+          <th>Peticiones</th>
+          <th>Errores</th>
+          <th>Tasa de Error (%)</th>
+          <th>RPS</th>
+          <th>p50 (ms)</th>
+          <th>p95 (ms)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>/api/v1/doctors</td>
+          <td>3800</td>
+          <td>0</td>
+          <td>0.00 %</td>
+          <td>12.70</td>
+          <td>7.79</td>
+          <td>14.99</td>
+        </tr>
+        <tr>
+          <td>/api/v1/doctors (POST)</td>
+          <td>404</td>
+          <td>404</td>
+          <td>100.00 %</td>
+          <td>1.35</td>
+          <td>NaN</td>
+          <td>NaN</td>
+        </tr>
+        <tr>
+          <td>/api/v1/doctors/statistics</td>
+          <td>1169</td>
+          <td>0</td>
+          <td>0.00 %</td>
+          <td>3.91</td>
+          <td>5.42</td>
+          <td>11.25</td>
+        </tr>
+        <tr>
+          <td>/api/v1/institutions</td>
+          <td>3686</td>
+          <td>0</td>
+          <td>0.00 %</td>
+          <td>12.32</td>
+          <td>7.94</td>
+          <td>15.06</td>
+        </tr>
+        <tr>
+          <td>/api/v1/institutions/search</td>
+          <td>1481</td>
+          <td>0</td>
+          <td>0.00 %</td>
+          <td>4.95</td>
+          <td>46.65</td>
+          <td>51.91</td>
+        </tr>
+        <tr>
+          <td>/api/v1/patients</td>
+          <td>6507</td>
+          <td>0</td>
+          <td>0.00 %</td>
+          <td>21.75</td>
+          <td>7.63</td>
+          <td>13.47</td>
+        </tr>
+        <tr>
+          <td>/api/v1/patients (POST)</td>
+          <td>657</td>
+          <td>657</td>
+          <td>100.00 %</td>
+          <td>2.20</td>
+          <td>NaN</td>
+          <td>NaN</td>
+        </tr>
+        <tr>
+          <td>/auth/login</td>
+          <td>157</td>
+          <td>8</td>
+          <td>5.10 %</td>
+          <td>0.52</td>
+          <td>923.26</td>
+          <td>1248.58</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 0.9rem; color: #666;">(Duración total de la prueba: 299.22 segundos)</p>
+
+    <h3>Gráficas Generadas por Locust</h3>
+    
+    <img src="img/baseline/figura1.png" alt="Tiempos de respuesta">
+    <div class="img-caption">Figura 1: Tiempos de respuesta (ms) a lo largo del tiempo.</div>
+
+    <img src="img/baseline/figura2.png" alt="RPS vs Usuarios">
+    <div class="img-caption">Figura 2: Peticiones por segundo (RPS) en relación con los usuarios concurrentes.</div>
+
+    <img src="img/baseline/figura3.png" alt="Conteo de éxitos">
+    <div class="img-caption">Figura 3: Conteo de éxitos de las peticiones por segundo (RPS) a lo largo del tiempo.</div>
+
+    <img src="img/baseline/figura4.png" alt="Tasa de fallos">
+    <div class="img-caption">Figura 4: Tasa de fallos a lo largo del tiempo.</div>
+
+    <h3>Interpretación de la Prueba Baseline</h3>
+    <div class="alert-info">
+      <strong>El Problema No es el Rendimiento, es la Autorización</strong>
+    </div>
+    <p>
+      Los resultados de la prueba baseline revelaron un hallazgo crítico que no está relacionado con el rendimiento del servidor, sino con la lógica de autenticación y los datos de prueba.
+      La métrica más importante de esta prueba es la <strong>tasa de error del 5.99%</strong>. Como se evidencia en la tabla de fallos extraída del reporte de Locust, todos los errores fueron de tipo <strong>401 UNAUTHORIZED</strong>. Esto significa que el servidor no se cayó ni se puso lento; al contrario, funcionó correctamente al rechazar peticiones no autorizadas.
+    </p>
+
+    <h4>Desglose y Análisis de los Fallos</h4>
     <ul>
       <li>
-        <strong>Estabilidad del Throughput (RPS):</strong> 
-        Observando la línea verde en la gráfica superior, el sistema alcanzó un flujo constante de peticiones por segundo una vez finalizada la rampa de subida. No se observan caídas abruptas a cero, lo que indica que el <em>API Gateway</em> no se saturó y mantuvo la capacidad de encolar peticiones hacia los microservicios.
+        <strong>Fallos en POST /auth/login:</strong> Este es el origen del problema. Una parte de los usuarios simulados intentó iniciar sesión con credenciales inválidas. Esto indica una inconsistencia entre el archivo <code>users.csv</code> y la base de datos de usuarios registrados. Es probable que esos usuarios no existieran o tuvieran contraseñas incorrectas.
       </li>
       <li>
-        <strong>Latencia bajo Carga (Tiempo de Respuesta):</strong>
-        La línea morada (Percentil 95) muestra picos iniciales superiores a los <strong>600ms</strong> durante la fase de login masivo (ramp-up). Sin embargo, es crucial notar que al estabilizarse los 150 usuarios, la latencia promedio desciende y se mantiene en el rango de <strong>200-300ms</strong> para las tareas de lectura (GET). Esto sugiere que el "cuello de botella" está en la autenticación (hashing de contraseñas), no en la consulta de datos.
-      </li>
-      <li>
-        <strong>Naturaleza de los Errores (Failures):</strong>
-        La tasa de fallos visible en la gráfica roja no corresponde a errores 500 (Server Error). El análisis de logs confirma que son mayoritariamente <strong>422 Unprocessable Entity</strong>. Esto ocurre porque el script intenta crear registros (ej. Doctores) que ya existen en la base de datos debido a ejecuciones previas. Esto valida que la integridad referencial de la base de datos está protegida.
+        <strong>Fallos en POST /api/v1/doctors y POST /api/v1/patients:</strong> Este es un efecto secundario directo del fallo anterior. Cuando un usuario no puede iniciar sesión, su token JWT no es generado. Por lo tanto, cualquier intento posterior de realizar una acción protegida (como crear un doctor o paciente) resulta en un error 401 UNAUTHORIZED.
       </li>
     </ul>
+
+    <h4>Rendimiento de las Peticiones Exitosas</h4>
+    <p>
+      A pesar de los fallos de autenticación, el <strong>94% de las peticiones fueron exitosas</strong> y mostraron un rendimiento excelente. 
+      Con un tiempo de respuesta <strong>p95 de 48.34 ms</strong>, queda demostrado que la infraestructura (servicios, base de datos y caché) es muy rápida y capaz de manejar la carga sin degradación de la latencia.
+    </p>
   </section>
 
   <section id="conclusiones">
-    <h2>7. Conclusiones y Recomendaciones</h2>
+    <h2>6. Conclusiones y Recomendaciones</h2>
 
     <h3>¿Son los sistemas listos para producción?</h3>
     <p>
-      <strong>No en su estado actual.</strong> Aunque la arquitectura de microservicios es funcional, la alta latencia detectada durante la fase de login (simultánea) sugiere que el servicio de Auth necesita optimización antes de salir a producción.
+      <strong>Sí, en términos de rendimiento.</strong> La infraestructura demostró tiempos de respuesta excepcionales (< 50ms) bajo carga. Sin embargo, la <strong>integridad de los datos de prueba</strong> debe ser corregida antes de la siguiente fase para evitar el ruido generado por los errores de autenticación.
     </p>
 
     <h3>Mejoras Sugeridas</h3>
     <ul>
-      <li><strong>Base de Datos:</strong> Implementar índices (Database Indexing) en los campos de búsqueda (email, nombres) para reducir el tiempo de CPU en PostgreSQL.</li>
-      <li><strong>Caching:</strong> Implementar Redis para cachear los tokens de sesión y evitar validar contra la BD en cada petición.</li>
-      <li><strong>Infraestructura:</strong> Aumentar los recursos (CPU) del contenedor del microservicio de Auth, ya que es el punto único de fallo durante el inicio de sesión masivo.</li>
-    </ul>
-
-    <h3>Lecciones aprendidas</h3>
-    <ul>
-      <li>La importancia de aislar los datos de prueba: Usar un CSV compartido generó conflictos de "usuario ya existente". Para futuras pruebas, se deben generar datos únicos dinámicamente (ej. usando librerías como Faker).</li>
+      <li><strong>Sincronización de Datos:</strong> Regenerar el archivo <code>users.csv</code> asegurando que todos los usuarios listados existan realmente en la base de datos de prueba.</li>
+      <li><strong>Manejo de Tokens:</strong> Revisar el script de Locust para asegurar que, si el login falla, el usuario no intente ejecutar tareas posteriores que requieran token, evitando así la cascada de errores 401.</li>
     </ul>
 
     <div style="margin-top: 2rem; padding: 1rem; background-color: #e9ecef; border-radius: 5px;">
-      <strong>Entregables:</strong><br>
-      Se adjunta el paquete completo con el script final y los datos utilizados.
+      <strong>Nota sobre Archivos Adjuntos:</strong><br>
+      El archivo <code>users.csv</code> utilizado para la parametrización de usuarios se incluye dentro del archivo comprimido ZIP a continuación.
     </div>
 
     <a href="archivos/Ejercicio7-Baseline.zip" class="btn-download">
-      Descargar Paquete de Pruebas (.zip)
+      Descargar Paquete de Pruebas Baseline (.zip)
     </a>
   </section>
 
