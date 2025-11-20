@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio Guiado 10: Pruebas Ramp-up / Ramp-down</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; max-width: 950px; margin: 2rem auto; padding: 2rem; background: #f9f9f9; color: #333; line-height: 1.6; }
+    h1 { text-align: center; color: #333; border-bottom: 3px solid #ddd; padding-bottom: 1rem; }
+    h2 { border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 3rem; color: #2c3e50; }
+    h3 { color: #0056b3; margin-top: 2rem; font-weight: 600; }
+    h4 { color: #444; margin-top: 1.5rem; font-weight: bold; }
+    section { background: #fff; padding: 2.5rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    ul, ol { margin-left: 20px; }
+    li { margin-bottom: 8px; }
+    
+    /* Estilos de Tablas */
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+    th { background-color: #0056b3; color: white; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e9ecef; }
+
+    /* Imágenes */
+    img { max-width: 100%; border: 1px solid #e1e1e1; border-radius: 6px; margin: 1rem auto; display: block; }
+    .img-caption { text-align: center; font-size: 0.85rem; color: #666; font-style: italic; margin-bottom: 2rem; }
+    
+    /* Estilos de Código */
+    pre { background: #1e1e1e; color: #dcdcdc; padding: 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; border-left: 5px solid #0056b3; margin-top: 1rem; }
+    code { font-family: "Consolas", "Monaco", monospace; }
+    .tech-block { background-color: #f1f8ff; padding: 15px; border-radius: 5px; border: 1px solid #cce5ff; font-family: monospace; margin-bottom: 1rem; }
+
+    /* Botón de descarga */
+    .download-button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: #ffffff;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      text-align: center;
+      transition: background-color 0.3s;
+      margin-top: 1rem;
+    }
+    .download-button:hover {
+      background-color: #004a99;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    a.back { text-decoration: none; color: #666; font-weight: bold; }
+    
+    .alert-info { background-color: #d1ecf1; color: #0c5460; padding: 1rem; border-radius: 5px; border: 1px solid #bee5eb; margin-top: 1rem; }
+    .alert-success { background-color: #d4edda; color: #155724; padding: 1rem; border-radius: 5px; border: 1px solid #c3e6cb; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back">&larr; Regresar</a>
+  
+  <h1>Ejercicio Guiado 10: Pruebas Ramp-up / Ramp-down en Locust</h1>
+
+  <section id="introduccion">
+    <h2>1. Introducción</h2>
+    <p>
+      En este ejercicio implementamos una prueba de carga dinámica conocida como <strong>Ramp-up / Ramp-down</strong>. 
+      A diferencia de las pruebas anteriores donde la carga era constante o lineal, aquí utilizamos una clase especializada (<code>LoadTestShape</code>) para orquestar fluctuaciones controladas de tráfico.
+    </p>
+    <p>
+      Este tipo de prueba es crucial para evaluar la <strong>elasticidad</strong> del sistema: su capacidad para escalar recursos cuando la demanda sube (Ramp-up) y, 
+      igualmente importante, liberar esos recursos y estabilizarse cuando la demanda baja (Ramp-down), verificando que no existan fugas de memoria o procesos "zombies".
+    </p>
+  </section>
+
+  <section id="objetivos">
+    <h2>2. Objetivos de la Prueba</h2>
+    <ul>
+      <li>Evaluar la elasticidad del sistema (RPS y latencia) en respuesta a un crecimiento y decrecimiento gradual de usuarios.</li>
+      <li>Observar la estabilidad de la latencia (p95) y la tasa de errores durante los cambios de carga (fases de rampa).</li>
+      <li>Verificar que el sistema recupera su rendimiento baseline después de la carga (al finalizar el ramp-down), buscando conexiones no liberadas (RPS que no baja a cero).</li>
+    </ul>
+  </section>
+
+  <section id="metodologia">
+    <h2>3. Metodología</h2>
+    <h3>Arquitectura del Entorno de Prueba</h3>
+    <p>
+      Las pruebas se ejecutaron desde una máquina local que actuaba como nodo maestro de Locust, generando tráfico HTTP hacia los servicios desplegados. 
+      Los componentes del sistema (CMS y microservicios) estaban corriendo localmente a través de Docker Compose.
+    </p>
+    <div class="tech-block">
+      [Máquina Local (Locust Master)] -> [Red Local (Docker Network)] -> [Contenedores de CMS y Microservicios] -> [Contenedores de PostgreSQL y Redis]
+    </div>
+    
+    <p>Las URLs base configuradas para cada servicio bajo prueba fueron las siguientes:</p>
+    <ul>
+      <li><strong>CMS:</strong> <code>http://localhost:80</code></li>
+      <li><strong>Servicio Auth-JWT:</strong> <code>http://localhost:5000</code></li>
+      <li><strong>Servicio de Instituciones:</strong> <code>http://localhost:5001</code></li>
+      <li><strong>Servicio de Doctores:</strong> <code>http://localhost:5002</code></li>
+      <li><strong>Servicio de Pacientes:</strong> <code>http://localhost:5003</code></li>
+    </ul>
+
+    <h3>Herramientas Utilizadas</h3>
+    <ul>
+      <li><strong>Locust:</strong> Versión 2.41.6</li>
+      <li><strong>Sistema Operativo:</strong> Windows 11</li>
+      <li><strong>Hardware:</strong> CPU 2 núcleos (4+ recomendado), RAM 4GB (8GB+ recomendado), Almacenamiento 10GB disponible.</li>
+      <li><strong>Infraestructura:</strong> 
+        <ul>
+          <li>Docker (v20.10+) y Docker Compose (v2.0+)</li>
+          <li>Memoria asignada a contenedores: 8GB+ RAM</li>
+        </ul>
+      </li>
+      <li><strong>Backends:</strong> PostgreSQL (v15+), Redis (v6.0+) con soporte para 20+ conexiones simultáneas.</li>
+      <li><strong>Lenguaje:</strong> Python 3.11+</li>
+    </ul>
+  </section>
+
+  <section id="escenarios">
+    <h2>4. Descripción de los Escenarios de Carga</h2>
+    <p>
+      Se implementó un patrón de carga por etapas ("Step Load") definido programáticamente en la clase <code>StagesShape</code>. 
+      El escenario simula picos de actividad seguidos de periodos de calma.
+    </p>
+
+    <h3>Fases del Escenario (Stages)</h3>
+    <ol>
+      <li><strong>Ramp-up 1:</strong> Subir a 10 usuarios.</li>
+      <li><strong>Hold 1:</strong> Mantener 10 usuarios (Estabilización).</li>
+      <li><strong>Ramp-up 2:</strong> Subir a 50 usuarios (Pico moderado).</li>
+      <li><strong>Hold 2:</strong> Mantener 50 usuarios.</li>
+      <li><strong>Ramp-up 3:</strong> Subir a 100 usuarios (Pico máximo de prueba).</li>
+      <li><strong>Hold 3:</strong> Mantener 100 usuarios.</li>
+      <li><strong>Ramp-down:</strong> Bajar gradualmente a 50, luego a 10 y finalmente a 0 usuarios.</li>
+    </ol>
+  </section>
+
+  <section id="codigo-generado">
+    <h2>5. Código Generado</h2>
+    
+    <p><strong>Archivo shape_ramp_test.py</strong></p>
+    <p>
+      El script utiliza la clase <code>LoadTestShape</code> de Locust para definir el control fino sobre el número de usuarios y la tasa de generación (spawn rate) en función del tiempo.
+    </p>
+<pre><code># shape_ramp_test.py
+from locust import HttpUser, task, between, LoadTestShape
+from common.users import DoctorUser, PatientUser, InstitutionUser
+
+class StagesShape(LoadTestShape):
+    """
+    Define una prueba de carga con etapas escalonadas (Step Load Pattern).
+    """
+    stages = [
+        {"duration": 30, "users": 10, "spawn_rate": 5},
+        {"duration": 60, "users": 10, "spawn_rate": 5},
+        {"duration": 90, "users": 50, "spawn_rate": 5},
+        {"duration": 120, "users": 50, "spawn_rate": 5},
+        {"duration": 150, "users": 100, "spawn_rate": 5},
+        {"duration": 180, "users": 100, "spawn_rate": 5},
+        {"duration": 210, "users": 50, "spawn_rate": 5}, # Inicio Ramp-down
+        {"duration": 240, "users": 10, "spawn_rate": 5},
+    ]
+
+    def tick(self):
+        run_time = self.get_run_time()
+        for stage in self.stages:
+            if run_time < stage["duration"]:
+                tick_data = (stage["users"], stage["spawn_rate"])
+                return tick_data
+        return None
+</code></pre>
+  </section>
+
+  <section id="resultados">
+    <h2>6. Resultados y Análisis Detallado</h2>
+    <p>
+      La prueba tuvo una duración total aproximada de 4 minutos, cubriendo todas las fases de subida y bajada.
+    </p>
+
+    <h3>Métricas Clave (shape_ramp.csv)</h3>
+    <table>
+      <tr><th>Métrica</th><th>Valor</th></tr>
+      <tr><td>Total Peticiones</td><td>3,355</td></tr>
+      <tr><td>RPS Promedio</td><td>11.2</td></tr>
+      <tr><td>Tasa de Error</td><td>0.48% (16 errores)</td></tr>
+      <tr><td>Tiempo Respuesta (p95) - API</td><td>15 ms</td></tr>
+      <tr><td>Tiempo Respuesta (p95) - Login</td><td>1200 ms</td></tr>
+    </table>
+
+    <h3>Gráficas de Comportamiento</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <img src="img/ramp/figure1.png" alt="Tiempos de respuesta">
+            <div class="img-caption">Figura 1: Tiempos de respuesta (ms) a lo largo del tiempo.</div>
+        </div>
+        <div>
+            <img src="img/ramp/figure2.png" alt="Peticiones por Segundo">
+            <div class="img-caption">Figura 2: Peticiones por segundo (RPS) en relación con los usuarios concurrentes.</div>
+        </div>
+        <div>
+            <img src="img/ramp/figure3.png" alt="Usuarios Concurrentes">
+            <div class="img-caption">Figura 3: Conteo de éxitos de las peticiones por segundo (RPS) a lo largo del tiempo.</div>
+        </div>
+        <div>
+            <img src="img/ramp/figure4.png" alt="Tasa de Fallos">
+            <div class="img-caption">Figura 4: Tasa de fallos a lo largo del tiempo.</div>
+        </div>
+    </div>
+
+    <h3>Análisis e Interpretación</h3>
+    
+    <div class="alert-success">
+      <strong>Estabilidad Confirmada:</strong> El sistema demostró una excelente elasticidad. No hubo degradación de rendimiento en los microservicios core durante los picos de 100 usuarios.
+    </div>
+
+    <ul>
+      <li>
+        <strong>Comportamiento de Latencia:</strong> 
+        Observando la Fig 1, la latencia de las operaciones de negocio (Doctores, Pacientes) se mantuvo plana y por debajo de los <strong>20ms</strong> incluso cuando la carga se duplicó de 50 a 100 usuarios. Esto indica que el sistema escala bien horizontalmente o que no ha alcanzado su límite de recursos.
+      </li>
+      <li>
+        <strong>Análisis de Errores (Login):</strong>
+        Se registraron 16 errores (0.48%), todos concentrados en <code>/auth/login</code>. Al correlacionar con la Fig 3 (Usuarios), estos errores ocurrieron durante las fases de <em>Ramp-up</em> agresivo. Esto sugiere que el servicio de autenticación tiene un límite de concurrencia para generar tokens (hashing costoso), pero una vez logueados, los usuarios operan sin fallos.
+      </li>
+      <li>
+        <strong>Recuperación (Ramp-down):</strong>
+        Durante la fase de bajada (minuto 3:30 en adelante), el sistema liberó la carga correctamente. No se observó "latencia residual" (efecto cola), lo que confirma que la base de datos y el API Gateway gestionan correctamente el cierre de conexiones.
+      </li>
+    </ul>
+  </section>
+
+  <section id="conclusiones">
+    <h2>7. Conclusiones</h2>
+    <h3>Diagnóstico del Sistema</h3>
+    <p>
+      La prueba de Ramp-up/Ramp-down fue exitosa. PredictHealth demostró ser capaz de absorber picos de tráfico de hasta 100 usuarios concurrentes sin afectar la experiencia de navegación (lecturas). El sistema recupera su estado base instantáneamente tras la caída de la demanda.
+    </p>
+    <h3>Recomendaciones</h3>
+    <ul>
+      <li><strong>Optimizar Login:</strong> Dado que los únicos errores ocurren en la autenticación durante las subidas rápidas, se recomienda aumentar las réplicas del servicio Auth o implementar un mecanismo de "Rate Limiting" más amigable para encolar las peticiones de login en lugar de rechazarlas.</li>
+      <li><strong>Pruebas de Pico (Spike):</strong> El sistema está listo para pruebas de pico más agresivas (ej. 0 a 200 usuarios en 10 segundos) para probar los límites de rotura.</li>
+    </ul>
+
+    <a href="docs/ejerciciosguiados/ejercicio10/ejercicio10.zip" class="download-button" download>
+      Descargar Pruebas Ramp-up (.zip)
+    </a>
+  </section>
+
+</body>
+</html>
