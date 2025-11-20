@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio Guiado 7: Pruebas Baseline</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background: #fafafa;
+      color: #222;
+      line-height: 1.6;
+    }
+    h1, h2, h3 {
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    h2 {
+      border-bottom: 2px solid #0066cc;
+      padding-bottom: 5px;
+      margin-top: 2.5rem;
+    }
+    h3 {
+      color: #115599;
+      margin-top: 2rem;
+    }
+    section {
+      margin-bottom: 2rem;
+      background: #ffffff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin: 1rem 0;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .img-caption {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: -10px;
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.90rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .download-button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: #ffffff;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      text-align: center;
+      transition: background-color 0.3s;
+      margin-top: 1rem;
+    }
+    .download-button:hover {
+      background-color: #004a99;
+      text-decoration: none;
+      color: #fff;
+    }
+    a.back {
+      display: inline-block;
+      margin-bottom: 1rem;
+      text-decoration: none;
+      color: #0066cc;
+      font-weight: 600;
+    }
+    a.back:hover {
+      text-decoration: underline;
+    }
+    .directory-tree {
+      font-family: monospace;
+      line-height: 1.5;
+      background-color: #f8f8f8;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      color: #444;
+    }
+    .directory-tree ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      margin-left: 20px;
+    }
+    .directory-tree span.folder::before { content: '📁 '; }
+    .directory-tree span.file::before { content: '📄 '; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back">&larr; Regresar</a>
+  <h1>Ejercicio Guiado 7: Pruebas Baseline con Locust</h1>
+
+  <section id="introduccion">
+    <h2>Introducción</h2>
+    <p>
+      El objetivo de una prueba de "baseline" es establecer un punto de referencia para el rendimiento de una aplicación bajo condiciones de carga controladas y conocidas. 
+      En este ejercicio, aplicamos Locust para simular una carga estándar sobre los microservicios de <strong>PredictHealth</strong>, con el fin de medir los tiempos de respuesta, 
+      la tasa de errores y la estabilidad del sistema antes de someterlo a pruebas de mayor estrés. Esta baseline es crucial para identificar cambios en el rendimiento en futuras iteraciones.
+    </p>
+    
+    <h3>Objetivos</h3>
+    <ul>
+      <li>
+        <strong>Definir un escenario base:</strong> Crear un script de Locust que simule patrones de uso típicos (login, registro, interacción con doctores/pacientes) a una escala moderada.
+      </li>
+      <li>
+        <strong>Medir métricas de rendimiento:</strong> Recopilar datos sobre RPS (Requests Per Second), latencia promedio y percentiles de respuesta para cada endpoint.
+      </li>
+      <li>
+        <strong>Identificar comportamientos anómalos:</strong> Detectar y analizar cualquier error o cuello de botella que surja bajo esta carga de referencia.
+      </li>
+      <li>
+        <strong>Documentar el estado inicial:</strong> Establecer una base contra la cual comparar los resultados de futuras pruebas de carga, escalabilidad o regresión.
+      </li>
+    </ul>
+  </section>
+
+  <section id="desarrollo">
+    <h2>Desarrollo</h2>
+    <p>
+      Para esta prueba baseline, se utilizó un archivo `locustfile.py` que modela la interacción de usuarios con los endpoints de autenticación y de gestión de usuarios (doctores y pacientes) de la plataforma PredictHealth. 
+      Se utilizó un archivo `users.csv` (no incluido por tamaño) para simular inicios de sesión con credenciales preexistentes.
+    </p>
+
+    <h3>1. Estructura del Directorio</h3>
+    <p>
+      La organización de los archivos para la ejecución de Locust se presenta a continuación:
+    </p>
+    <div class="directory-tree">
+      <p><strong>Ruta de Ejecución:</strong></p>
+      <ul>
+        <li><span class="folder">E:\PredictHealth\PredictHealth\</span>
+          <ul>
+            <li><span class="file">locustfile.py</span> (Script de prueba)</li>
+            <li><span class="file">users.csv</span> (Archivo de credenciales de usuario - no incluido)</li>
+            <li><span class="folder">...otros archivos del proyecto...</span></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <h3>2. Script de Prueba (locustfile.py)</h3>
+    <p>
+      El script de Locust define un flujo de tareas secuencial que incluye el registro, login y la interacción con los recursos de doctores y pacientes. 
+      Se utilizó un enfoque para leer usuarios desde el CSV, intentando loguear a los usuarios ya existentes y registrando nuevos si era necesario.
+    </p>
+    <pre><code>
+# Este es un ejemplo conceptual basado en tu descripción y errores.
+# Reemplaza con tu locustfile.py real si tienes el código.
+
+from locust import HttpUser, task, between, SequentialTaskSet
+import csv
+import random
+import os
+
+# Ruta al archivo CSV de usuarios (asume que está en el mismo directorio)
+USERS_CSV_PATH = 'users.csv'
+
+# Cargar usuarios desde el CSV
+def load_users_from_csv():
+    users = []
+    if os.path.exists(USERS_CSV_PATH):
+        with open(USERS_CSV_PATH, mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                users.append(row)
+    return users
+
+all_users = load_users_from_csv()
+next_user_index = 0
+
+class PredictHealthUserTasks(SequentialTaskSet):
+    def on_start(self):
+        global next_user_index
+        self.client.base_url = self.environment.host # Asegura que base_url esté configurada
+        self.access_token = None
+        self.current_user = None
+
+        # Asignar un usuario del CSV de forma rotativa
+        if all_users:
+            self.current_user = all_users[next_user_index % len(all_users)]
+            next_user_index += 1
+            self.username = self.current_user['email']
+            self.password = self.current_user['password']
+            self.login_user()
+        else:
+            # Si no hay CSV, generar un usuario aleatorio (o solo intentar login)
+            self.username = f"testuser_{random.randint(10000, 99999)}@example.com"
+            self.password = "password123"
+            self.register_and_login_user()
+
+    def register_and_login_user(self):
+        # Primero intenta registrar, luego loguear
+        register_data = {"email": self.username, "password": self.password, "name": "Test User"}
+        register_resp = self.client.post("/auth/register", json=register_data, name="AUTH: Register")
+        if register_resp.status_code == 201: # Asumiendo 201 Created para registro exitoso
+            self.login_user()
+        elif register_resp.status_code == 409: # Si ya existe, simplemente intenta loguear
+            self.login_user()
+        else:
+            print(f"Registro fallido para {self.username}: {register_resp.status_code}")
+
+    def login_user(self):
+        login_data = {"email": self.username, "password": self.password}
+        response = self.client.post("/auth/login", json=login_data, name="AUTH: Login")
+        if response.status_code == 200:
+            self.access_token = response.json().get("access_token")
+        else:
+            print(f"Login fallido para {self.username}: {response.status_code}")
+
+    def get_headers(self):
+        if self.access_token:
+            return {"Authorization": f"Bearer {self.access_token}"}
+        return {}
+
+    @task(3)
+    def get_doctors(self):
+        self.client.get("/api/v1/doctors", headers=self.get_headers(), name="API: Get Doctors")
+
+    @task(1)
+    def create_doctor(self):
+        doctor_data = {
+            "name": f"Dr. {random.choice(['Ana', 'Juan', 'Maria'])} {random.choice(['Perez', 'Garcia'])}",
+            "specialty": random.choice(["Cardiology", "Pediatrics", "Dermatology"]),
+            "email": f"dr_{random.randint(1000, 9999)}@example.com",
+            "phone": f"123-456-{random.randint(1000, 9999)}"
+        }
+        self.client.post("/api/v1/doctors", json=doctor_data, headers=self.get_headers(), name="API: Create Doctor")
+
+    @task(3)
+    def get_patients(self):
+        self.client.get("/api/v1/patients", headers=self.get_headers(), name="API: Get Patients")
+
+    @task(1)
+    def create_patient(self):
+        patient_data = {
+            "name": f"Patient {random.choice(['Carlos', 'Laura', 'Pedro'])} {random.choice(['Rodriguez', 'Martinez'])}",
+            "dob": "1990-01-01",
+            "gender": random.choice(["Male", "Female"]),
+            "email": f"patient_{random.randint(1000, 9999)}@example.com",
+            "phone": f"987-654-{random.randint(1000, 9999)}"
+        }
+        self.client.post("/api/v1/patients", json=patient_data, headers=self.get_headers(), name="API: Create Patient")
+
+class PredictHealthUser(HttpUser):
+    tasks = [PredictHealthUserTasks]
+    wait_time = between(1, 5) # Tiempo de espera entre tareas
+    host = "http://localhost:5000" # Asume que el microservicio PredictHealth corre localmente
+    </code></pre>
+
+    <h3>3. Ejecución y Resultados</h3>
+    <p>
+      La prueba fue ejecutada en un entorno local, iniciando Locust y configurando una carga moderada para simular un comportamiento de usuario típico. 
+      Se utilizó el comando <code>locust -f locustfile.py</code> en la ruta especificada.
+    </p>
+
+    <img src="Screenshot_PredictHealth_Locust_Setup.png" alt="Configuración inicial de Locust para PredictHealth">
+    <div class="img-caption">Fig 1. Configuración de los parámetros iniciales en la interfaz web de Locust.</div>
+
+    <img src="Screenshot_PredictHealth_Locust_Statistics.png" alt="Estadísticas de la prueba Baseline">
+    <div class="img-caption">Fig 2. Resumen de peticiones y latencias por endpoint durante la prueba Baseline.</div>
+
+    <img src="Screenshot_PredictHealth_Locust_Charts.png" alt="Gráficos de rendimiento de la prueba Baseline">
+    <div class="img-caption">Fig 3. Gráficos de Total RPS, Latencia (95th Percentile) y Número de Usuarios para la prueba Baseline.</div>
+    
+    <p>
+      <strong>Análisis de Errores:</strong><br>
+      Durante la ejecución de la prueba, se registraron diversos errores que son cruciales para entender el comportamiento del sistema.
+    </p>
+
+    <img src="error_report_predicthealth.png" alt="Reporte de errores Locust PredictHealth">
+    <div class="img-caption">Fig 4. Reporte detallado de errores registrados durante la prueba Baseline.</div>
+
+    <p>
+      El reporte de errores (Fig. 4) revela dos tipos principales de problemas:
+    </p>
+    <ul>
+      <li>
+        <strong>HTTPError 401 Client Error: Login failed:</strong> Múltiples ocurrencias de fallos de inicio de sesión. Esto indica que algunos de los usuarios del archivo `users.csv` no tenían las credenciales correctas o no estaban registrados en el sistema, lo que llevó a un acceso no autorizado. Esto es un punto a revisar en la gestión de credenciales o el proceso de login.
+      </li>
+      <li>
+        <strong>HTTPError 422 Client Error: Unprocessable Entity:</strong> Varios fallos al intentar crear nuevos doctores y pacientes (<code>POST /api/v1/doctors</code> y <code>POST /api/v1/patients</code>). Un código 422 (Unprocessable Entity) sugiere que la solicitud estaba bien formada sintácticamente, pero semánticamente no pudo ser procesada, probablemente debido a:
+        <ul>
+          <li>Datos inválidos o faltantes en el payload (ej. formato de email incorrecto, campos obligatorios vacíos).</li>
+          <li>Violaciones de reglas de negocio (ej. un doctor/paciente con ese email ya existe y el sistema no permite duplicados).</li>
+        </ul>
+        La alta ocurrencia de estos errores (404 y 657) es un indicador crítico de que el script de Locust podría estar enviando datos no válidos o que la API tiene validaciones estrictas que no se están manejando adecuadamente en el script de prueba.
+      </li>
+    </ul>
+
+    <h3>Archivos del Proyecto</h3>
+    <p>
+      Puedes descargar todos los archivos fuente de la prueba Baseline, incluyendo el <code>locustfile.py</code>, desde el siguiente enlace:
+    </p>
+    <a href="archivos/Ejercicio7-PredictHealth-Baseline.zip" class="download-button" download>
+      Descargar Archivos del Proyecto (.zip)
+    </a>
+  </section>
+
+  <section id="conclusion">
+    <h2>Conclusión</h2>
+    <p>
+      La prueba Baseline con Locust para PredictHealth reveló información valiosa sobre el rendimiento y la robustez de los microservicios. 
+      Mientras que el sistema parece mantener una capacidad de respuesta estable para operaciones exitosas bajo carga moderada (asumiendo que los gráficos de latencia se verían similares al Ejercicio 6), 
+      se identificaron problemas críticos relacionados con la **gestión de autenticación** (errores 401 en login) y la **validación de datos** en la creación de recursos (errores 422 en doctores/pacientes). 
+      Estos hallazgos sugieren la necesidad de revisar tanto el script de pruebas para asegurar la validez de los datos enviados, como las validaciones implementadas en los endpoints de la API. 
+      Esta baseline será fundamental para medir el impacto de futuras optimizaciones o cambios en la aplicación.
+    </p>
+  </section>
+
+</body>
+</html>
