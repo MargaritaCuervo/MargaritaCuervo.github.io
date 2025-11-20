@@ -6,7 +6,7 @@
   <title>Ejercicio Guiado: Prueba Smoke</title>
   <style>
     body { font-family: "Segoe UI", sans-serif; max-width: 950px; margin: 2rem auto; padding: 2rem; background: #f9f9f9; color: #333; line-height: 1.6; }
-    h1 { text-align: center; color: #0056b3; border-bottom: 3px solid #ddd; padding-bottom: 1rem; }
+    h1 { text-align: center; color: #333; border-bottom: 3px solid #ddd; padding-bottom: 1rem; }
     h2 { border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 3rem; color: #2c3e50; }
     h3 { color: #0056b3; margin-top: 2rem; font-weight: 600; }
     h4 { color: #444; margin-top: 1.5rem; font-weight: bold; }
@@ -58,7 +58,7 @@
 
   <a href="index.html" class="back">&larr; Regresar</a>
   
-  <h1>Ejercicio Guiado 7: Pruebas Smoke en Locust </h1>
+  <h1>Ejercicio Guiado 7: Pruebas Smoke en Locust</h1>
 
   <section id="introduccion">
     <h2>1. Introducción</h2>
@@ -229,4 +229,57 @@ locust -f smoke_test.py --headless -u 5 -r 1 --run-time 1m --tags smoke</code></
           <td>0</td>
           <td>0.00 %</td>
           <td>2.4</td>
-          <td>13.
+          <td>13.1</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 0.9rem; color: #666;">(Resultados representativos de una prueba smoke exitosa)</p>
+
+    <h3>Gráficas Generadas por Locust</h3>
+    
+    <img src="img/smoke/figura1.png" alt="Tiempos de respuesta - Smoke">
+    <div class="img-caption">Figura 1: Tiempos de respuesta planos y bajos (<20ms) indican ausencia de latencia estructural.</div>
+
+    <img src="img/smoke/figura4.png" alt="Tasa de fallos - Smoke">
+    <div class="img-caption">Figura 2: La ausencia total de barras rojas confirma disponibilidad del 100%.</div>
+
+    <h3>Interpretación Técnica de Resultados</h3>
+    <div class="alert-success">
+      <strong>Estado: PASSED (0% Errores)</strong>
+    </div>
+    <p>
+      Los resultados de la Prueba Smoke son concluyentes y positivos por las siguientes razones técnicas:
+    </p>
+    <ul>
+      <li>
+        <strong>Validación de Gateway:</strong> El hecho de tener 0 errores en 450 peticiones confirma que el API Gateway está enrutando correctamente el tráfico hacia los contenedores internos. No hubo errores 502, lo que suele ocurrir cuando el Gateway no encuentra el microservicio.
+      </li>
+      <li>
+        <strong>Conectividad de Base de Datos:</strong> Las peticiones a <code>/api/v1/doctors</code> retornaron éxito (200 OK) con una latencia de 12.4ms. Esto implica que el microservicio de Doctores pudo abrir conexión con PostgreSQL, ejecutar la consulta y devolver el JSON en tiempo real.
+      </li>
+      <li>
+        <strong>Latencia Basal:</strong> El tiempo de respuesta promedio de 5.2ms establece una excelente línea base. Cualquier latencia superior a esto en pruebas futuras será atribuible puramente a la carga (queuing) y no a problemas de red.
+      </li>
+    </ul>
+  </section>
+
+  <section id="conclusiones">
+    <h2>7. Conclusiones</h2>
+
+    <h3>Estado del Sistema</h3>
+    <p>
+      El entorno de despliegue de <strong>PredictHealth</strong> ha demostrado estar <strong>operativo y estable</strong>. La arquitectura de contenedores pasó todas las verificaciones de sanidad sin registrar incidentes ni caídas de servicio.
+    </p>
+
+    <h3>Implicaciones para el Proyecto</h3>
+    <p>
+      La ejecución exitosa de esta prueba Smoke sirvió como un "Quality Gate" (Compuerta de Calidad). Al haber obtenido un 100% de disponibilidad, confirmamos que el entorno estaba correctamente configurado para soportar las pruebas de carga subsiguientes que ya se realizaron. Esta prueba certifica que la infraestructura base es sólida.
+    </p>
+
+    <a href="docs/ejerciciosguiados/smoke/smoke_test.zip" class="download-button" download>
+      Descargar Paquete de Pruebas Smoke (.zip)
+    </a>
+  </section>
+
+</body>
+</html>
