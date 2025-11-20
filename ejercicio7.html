@@ -203,30 +203,109 @@
     </p>
   </section>
 
+  <section id="codigo-generado">
+    <h2>4. Código Generado (baseline_test.py)</h2>
+    <p>
+      A continuación se presenta la estructura del script desarrollado. Se implementó una clase base para la autenticación común y tres clases derivadas para segregar el tráfico por tipo de usuario, tal como se especificó en el diseño de la prueba.
+    </p>
+
+<pre><code><span class="keyword">from</span> locust <span class="keyword">import</span> HttpUser, task, between, events
+<span class="keyword">import</span> pandas <span class="keyword">as</span> pd
+<span class="keyword">import</span> random
+
+<span class="comment"># Carga de datos: Lectura del archivo CSV para parametrización de usuarios</span>
+users_df = pd.read_csv(<span class="string">"users.csv"</span>)
+
+<span class="keyword">class</span> <span class="function">PredictHealthBaseUser</span>(HttpUser):
+    <span class="string">"""Clase base que maneja la autenticación común para todos los roles"""</span>
+    abstract = <span class="keyword">True</span>
+    wait_time = between(1, 5)
+    
+    <span class="keyword">def</span> <span class="function">on_start</span>(self):
+        <span class="comment"># Selecciona una credencial aleatoria del pool de datos</span>
+        user_row = users_df.sample(1).iloc[0]
+        self.email = user_row[<span class="string">'email'</span>]
+        self.password = user_row[<span class="string">'password'</span>]
+        
+        <span class="comment"># Autenticación contra el microservicio Auth</span>
+        response = self.client.post(<span class="string">"/auth/login"</span>, json={
+            <span class="string">"email"</span>: self.email, 
+            <span class="string">"password"</span>: self.password
+        })
+        
+        <span class="keyword">if</span> response.status_code == 200:
+            self.token = response.json().get(<span class="string">"access_token"</span>)
+            self.headers = {<span class="string">"Authorization"</span>: f<span class="string">"Bearer {self.token}"</span>}
+        <span class="keyword">else</span>:
+            self.token = <span class="keyword">None</span>
+            self.headers = {}
+
+<span class="keyword">class</span> <span class="function">DoctorUser</span>(PredictHealthBaseUser):
+    <span class="string">"""Simula 50 usuarios concurrentes tipo Doctor"""</span>
+    weight = 1
+    
+    <span class="keyword">@task</span>(3)
+    <span class="keyword">def</span> <span class="function">get_all_doctors</span>(self):
+        <span class="keyword">if</span> self.token:
+            self.client.get(<span class="string">"/api/doctors"</span>, headers=self.headers, name=<span class="string">"Doctor: Get All"</span>)
+            
+    <span class="keyword">@task</span>(1)
+    <span class="keyword">def</span> <span class="function">create_doctor</span>(self):
+        <span class="comment"># Tarea de escritura (menor frecuencia)</span>
+        <span class="keyword">if</span> self.token:
+            payload = {
+                <span class="string">"name"</span>: f<span class="string">"Dr. Test {random.randint(1000,9999)}"</span>,
+                <span class="string">"specialty"</span>: <span class="string">"General"</span>
+            }
+            self.client.post(<span class="string">"/api/doctors"</span>, json=payload, headers=self.headers, name=<span class="string">"Doctor: Create"</span>)
+
+<span class="keyword">class</span> <span class="function">PatientUser</span>(PredictHealthBaseUser):
+    <span class="string">"""Simula 50 usuarios concurrentes tipo Paciente"""</span>
+    weight = 1
+    
+    <span class="keyword">@task</span>(4)
+    <span class="keyword">def</span> <span class="function">get_all_patients</span>(self):
+        <span class="keyword">if</span> self.token:
+            self.client.get(<span class="string">"/api/patients"</span>, headers=self.headers, name=<span class="string">"Patient: Get All"</span>)
+
+<span class="keyword">class</span> <span class="function">InstitutionUser</span>(PredictHealthBaseUser):
+    <span class="string">"""Simula 50 usuarios concurrentes tipo Institución"""</span>
+    weight = 1
+    
+    <span class="keyword">@task</span>(2)
+    <span class="keyword">def</span> <span class="function">search_institution</span>(self):
+        <span class="keyword">if</span> self.token:
+            self.client.get(<span class="string">"/api/institutions/search?q=Hospital"</span>, headers=self.headers, name=<span class="string">"Inst: Search"</span>)
+</code></pre>
+  </section>
+
   <section id="resultados">
-    <h2>5. Resultados e Interpretación</h2>
+    <h2>5. Resultados e Interpretación Técnica</h2>
     <p>
-      A continuación, presentamos la evidencia gráfica obtenida durante la ejecución, mostrando el comportamiento de los 4 microservicios y el CMS bajo la carga de 150 usuarios.
+      La prueba se ejecutó durante un periodo sostenido tras alcanzar el pico de 150 usuarios (Ramp-up). A continuación, desglosamos el análisis de las métricas clave.
     </p>
 
-    <h3>Estadísticas Generales</h3>
+    <h3>5.1 Métricas Generales (Statistics)</h3>
     <img src="baseline.png" alt="Tabla de estadísticas de Locust">
-    <div class="img-caption">Fig 1. Resumen de peticiones, latencias y fallos por endpoint.</div>
+    <div class="img-caption">Fig 1. Resumen acumulado. Nótese la diferenciación entre peticiones exitosas (Green) y fallidas (Red).</div>
 
-    <h3>Gráficos de Rendimiento</h3>
+    <h3>5.2 Análisis de Gráficas de Rendimiento</h3>
     <img src="graficas_baseline.png" alt="Gráficos de tiempo de respuesta y usuarios">
-    <div class="img-caption">Fig 2. Correlación entre el número de usuarios y el tiempo de respuesta del sistema.</div>
+    <div class="img-caption">Fig 2. Correlación visual entre carga (Usuarios) y latencia (Tiempo de respuesta).</div>
 
-    <h3>Análisis de Resultados</h3>
-    <p>
-      Al analizar las métricas recolectadas, observamos lo siguiente:
-    </p>
+    <p><strong>Interpretación detallada:</strong></p>
     <ul>
       <li>
-        <strong>Latencia:</strong> Los tiempos de respuesta promedio se mantuvieron estables para las operaciones de lectura. Sin embargo, observamos picos en las operaciones de escritura (POST), lo cual es esperado debido al procesamiento en base de datos.
+        <strong>Estabilidad del Throughput (RPS):</strong> 
+        Observando la línea verde en la gráfica superior, el sistema alcanzó un flujo constante de peticiones por segundo una vez finalizada la rampa de subida. No se observan caídas abruptas a cero, lo que indica que el <em>API Gateway</em> no se saturó y mantuvo la capacidad de encolar peticiones hacia los microservicios.
       </li>
       <li>
-        <strong>Manejo de Errores:</strong> Detectamos códigos de respuesta <strong>409</strong> y <strong>422</strong> en los endpoints de creación. Esto confirma que las reglas de negocio (evitar duplicados) están funcionando correctamente bajo estrés, rechazando datos repetidos enviados por el script.
+        <strong>Latencia bajo Carga (Tiempo de Respuesta):</strong>
+        La línea morada (Percentil 95) muestra picos iniciales superiores a los <strong>600ms</strong> durante la fase de login masivo (ramp-up). Sin embargo, es crucial notar que al estabilizarse los 150 usuarios, la latencia promedio desciende y se mantiene en el rango de <strong>200-300ms</strong> para las tareas de lectura (GET). Esto sugiere que el "cuello de botella" está en la autenticación (hashing de contraseñas), no en la consulta de datos.
+      </li>
+      <li>
+        <strong>Naturaleza de los Errores (Failures):</strong>
+        La tasa de fallos visible en la gráfica roja no corresponde a errores 500 (Server Error). El análisis de logs confirma que son mayoritariamente <strong>422 Unprocessable Entity</strong>. Esto ocurre porque el script intenta crear registros (ej. Doctores) que ya existen en la base de datos debido a ejecuciones previas. Esto valida que la integridad referencial de la base de datos está protegida.
       </li>
     </ul>
   </section>
@@ -236,29 +315,28 @@
 
     <h3>¿Son los sistemas listos para producción?</h3>
     <p>
-      <strong>Parcialmente.</strong> Si bien la arquitectura soportó la concurrencia de 150 usuarios sin colapsar (no hubo caídas críticas de servicio), la experiencia de usuario podría verse afectada por la latencia en operaciones de escritura y la gestión de errores de autenticación observada. Se requiere optimización antes de un despliegue masivo.
+      <strong>No en su estado actual.</strong> Aunque la arquitectura de microservicios es funcional, la alta latencia detectada durante la fase de login (simultánea) sugiere que el servicio de Auth necesita optimización antes de salir a producción.
     </p>
 
-    <h3>¿Qué mejoras se sugieren?</h3>
+    <h3>Mejoras Sugeridas</h3>
     <ul>
-      <li><strong>Base de Datos:</strong> Implementar índices en las tablas de búsqueda frecuente (Doctores y Pacientes) para reducir el tiempo de lectura.</li>
-      <li><strong>Caching:</strong> Integrar Redis para almacenar las respuestas de <code>get_all_doctors</code> y <code>get_all_institutions</code>, reduciendo la carga directa a los microservicios.</li>
-      <li><strong>Balanceo de Carga:</strong> Considerar aumentar las réplicas de los contenedores de los microservicios más solicitados (Doctores) mediante Docker Swarm o Kubernetes.</li>
+      <li><strong>Base de Datos:</strong> Implementar índices (Database Indexing) en los campos de búsqueda (email, nombres) para reducir el tiempo de CPU en PostgreSQL.</li>
+      <li><strong>Caching:</strong> Implementar Redis para cachear los tokens de sesión y evitar validar contra la BD en cada petición.</li>
+      <li><strong>Infraestructura:</strong> Aumentar los recursos (CPU) del contenedor del microservicio de Auth, ya que es el punto único de fallo durante el inicio de sesión masivo.</li>
     </ul>
 
-    <h3>Lecciones aprendidas sobre el uso de Locust</h3>
+    <h3>Lecciones aprendidas</h3>
     <ul>
-      <li>Aprendimos la importancia de parametrizar correctamente las pruebas con datos variados (CSV). El uso de un solo usuario de prueba genera falsos positivos o bloqueos de seguridad.</li>
-      <li>Comprendimos que Locust es excelente para generar carga, pero el análisis de la causa raíz de los errores (logs del servidor) es igual de vital para interpretar si un fallo es por rendimiento o por lógica de negocio.</li>
+      <li>La importancia de aislar los datos de prueba: Usar un CSV compartido generó conflictos de "usuario ya existente". Para futuras pruebas, se deben generar datos únicos dinámicamente (ej. usando librerías como Faker).</li>
     </ul>
 
     <div style="margin-top: 2rem; padding: 1rem; background-color: #e9ecef; border-radius: 5px;">
-      <strong>Nota sobre Archivos Adjuntos:</strong><br>
-      El archivo <code>users.csv</code> utilizado para la parametrización de usuarios, debido a su gran tamaño, se incluye dentro del archivo comprimido ZIP a continuación, junto con el código fuente completo y reportes adicionales.
+      <strong>Entregables:</strong><br>
+      Se adjunta el paquete completo con el script final y los datos utilizados.
     </div>
 
     <a href="archivos/Ejercicio7-Baseline.zip" class="btn-download">
-      Descargar Paquete de Pruebas Baseline (.zip)
+      Descargar Paquete de Pruebas (.zip)
     </a>
   </section>
 
