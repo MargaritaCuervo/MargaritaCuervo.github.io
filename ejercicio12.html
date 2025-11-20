@@ -138,41 +138,38 @@
     
     <p><strong>Archivo soak_test.py</strong></p>
     <p>
-      El script define un comportamiento estándar de usuarios (Doctores, Pacientes, Instituciones) operando continuamente.
+      El script importa los usuarios comunes y define la configuración específica para la prueba de resistencia, excluyendo las tareas etiquetadas como 'smoke' para asegurar una carga real de trabajo.
     </p>
 <pre><code># soak_test.py
-from locust import HttpUser, task, between
+"""
+Prueba de Resistencia (Soak Test):
+- Objetivo: Detectar degradación de rendimiento o fugas de memoria bajo carga sostenida.
+- Carga: Moderada y constante.
+- Duración: Larga (30+ minutos).
+- Tareas: Ejecuta todas las tareas EXCEPTO las de 'smoke'.
+"""
+
 from common.users import DoctorUser, PatientUser, InstitutionUser
-
-# Configuración para prueba de larga duración
-# Se utiliza una espera (wait_time) realista para no saturar
-# los logs innecesariamente, enfocándose en la estabilidad.
-
-class LongRunningDoctor(DoctorUser):
-    wait_time = between(2, 5)
-    
-    @task
-    def frequent_read(self):
-        self.client.get("/api/doctors")
-
-# ... configuración similar para otros roles ...
+import common.reporting
 </code></pre>
   </section>
 
   <section id="resultados">
     <h2>6. Resultados y Análisis Detallado</h2>
     <p>
-      La prueba se ejecutó durante 30 minutos continuos con 50 usuarios activos.
+      La prueba se ejecutó durante 30 minutos continuos con <strong>90 usuarios activos</strong>.
     </p>
 
-    <h3>Métricas Clave (soak.csv)</h3>
+    <h3>Métricas Clave (Resultados de soak.csv)</h3>
     <table>
       <tr><th>Métrica</th><th>Valor</th></tr>
-      <tr><td>Total Peticiones</td><td>18,450</td></tr>
-      <tr><td>RPS Promedio</td><td>10.25</td></tr>
-      <tr><td>Tasa de Error</td><td>0.00%</td></tr>
-      <tr><td>Tiempo Respuesta (p95) - Inicio</td><td>18 ms</td></tr>
-      <tr><td>Tiempo Respuesta (p95) - Final</td><td>19 ms</td></tr>
+      <tr><td>Total Peticiones</td><td>73,069</td></tr>
+      <tr><td>Tasa de Errores (%)</td><td>5.25% (3,838 errores)</td></tr>
+      <tr><td>Requests por Segundo (RPS)</td><td>40.62</td></tr>
+      <tr><td>Usuarios Concurrentes</td><td>90 (Constante)</td></tr>
+      <tr><td>Tiempo Respuesta (p50)</td><td>7.15 ms</td></tr>
+      <tr><td>Tiempo Respuesta (p95)</td><td>46.59 ms</td></tr>
+      <tr><td>Tiempo Respuesta (p99)</td><td>51.52 ms</td></tr>
     </table>
 
     <h3>Gráficas de Comportamiento</h3>
