@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio Guiado 12: Pruebas Soak</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; max-width: 950px; margin: 2rem auto; padding: 2rem; background: #f9f9f9; color: #333; line-height: 1.6; }
+    h1 { text-align: center; color: #333; border-bottom: 3px solid #ddd; padding-bottom: 1rem; }
+    h2 { border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 3rem; color: #2c3e50; }
+    h3 { color: #0056b3; margin-top: 2rem; font-weight: 600; }
+    h4 { color: #444; margin-top: 1.5rem; font-weight: bold; }
+    section { background: #fff; padding: 2.5rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    ul, ol { margin-left: 20px; }
+    li { margin-bottom: 8px; }
+    
+    /* Estilos de Tablas */
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+    th { background-color: #0056b3; color: white; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e9ecef; }
+
+    /* Imágenes */
+    img { max-width: 100%; border: 1px solid #e1e1e1; border-radius: 6px; margin: 1rem auto; display: block; }
+    .img-caption { text-align: center; font-size: 0.85rem; color: #666; font-style: italic; margin-bottom: 2rem; }
+    
+    /* Estilos de Código */
+    pre { background: #1e1e1e; color: #dcdcdc; padding: 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; border-left: 5px solid #0056b3; margin-top: 1rem; }
+    code { font-family: "Consolas", "Monaco", monospace; }
+    .tech-block { background-color: #f1f8ff; padding: 15px; border-radius: 5px; border: 1px solid #cce5ff; font-family: monospace; margin-bottom: 1rem; }
+
+    /* Botón de descarga */
+    .download-button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: #ffffff;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      text-align: center;
+      transition: background-color 0.3s;
+      margin-top: 1rem;
+    }
+    .download-button:hover {
+      background-color: #004a99;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    a.back { text-decoration: none; color: #666; font-weight: bold; }
+    
+    .alert-info { background-color: #d1ecf1; color: #0c5460; padding: 1rem; border-radius: 5px; border: 1px solid #bee5eb; margin-top: 1rem; }
+    .alert-success { background-color: #d4edda; color: #155724; padding: 1rem; border-radius: 5px; border: 1px solid #c3e6cb; margin-top: 1rem; }
+    .alert-warning { background-color: #fff3cd; color: #856404; padding: 1rem; border-radius: 5px; border: 1px solid #ffeeba; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back">&larr; Regresar</a>
+  
+  <h1>Ejercicio Guiado 12: Pruebas Soak en Locust</h1>
+
+  <section id="introduccion">
+    <h2>1. Introducción</h2>
+    <p>
+      En este reporte documentamos la ejecución de una <strong>Prueba de Resistencia (Soak Test)</strong>. 
+      A diferencia de las pruebas de estrés o picos que buscan el punto de quiebre inmediato, la prueba Soak somete al sistema a una carga moderada pero constante durante un periodo prolongado de tiempo.
+    </p>
+    <p>
+      El objetivo fundamental es detectar problemas que no aparecen en pruebas cortas, como <strong>fugas de memoria (memory leaks)</strong>, saturación de conexiones a base de datos, llenado de discos de logs o degradación progresiva del rendimiento (latencia creciente) en el ecosistema <strong>PredictHealth</strong>.
+    </p>
+  </section>
+
+  <section id="objetivos">
+    <h2>2. Objetivos de la Prueba</h2>
+    <ul>
+      <li>Detectar degradación progresiva en la latencia (p95) o en la tasa de errores, observando su comportamiento a lo largo de los 30 minutos.</li>
+      <li>Verificar la estabilidad del throughput (RPS) y de la latencia p95 de las operaciones exitosas (variación < 20%).</li>
+      <li>Observar el comportamiento de los errores en una sesión larga, para confirmar si son constantes (problema de datos) o si aumentan con el tiempo (problema de expiración de sesión no manejado).</li>
+    </ul>
+  </section>
+
+  <section id="metodologia">
+    <h2>3. Metodología</h2>
+    <h3>Arquitectura del Entorno de Prueba</h3>
+    <p>
+      Las pruebas se ejecutaron desde una máquina local que actuaba como nodo maestro de Locust, generando tráfico HTTP hacia los servicios desplegados. 
+      Los componentes del sistema (CMS y microservicios) estaban corriendo localmente a través de Docker Compose.
+    </p>
+    <div class="tech-block">
+      [Máquina Local (Locust Master)] -> [Red Local (Docker Network)] -> [Contenedores de CMS y Microservicios] -> [Contenedores de PostgreSQL y Redis]
+    </div>
+    
+    <p>Las URLs base configuradas para cada servicio bajo prueba fueron las siguientes:</p>
+    <ul>
+      <li><strong>CMS:</strong> <code>http://localhost:80</code></li>
+      <li><strong>Servicio Auth-JWT:</strong> <code>http://localhost:5000</code></li>
+      <li><strong>Servicio de Instituciones:</strong> <code>http://localhost:5001</code></li>
+      <li><strong>Servicio de Doctores:</strong> <code>http://localhost:5002</code></li>
+      <li><strong>Servicio de Pacientes:</strong> <code>http://localhost:5003</code></li>
+    </ul>
+
+    <h3>Herramientas Utilizadas</h3>
+    <ul>
+      <li><strong>Locust:</strong> Versión 2.41.6</li>
+      <li><strong>Sistema Operativo:</strong> Windows 11</li>
+      <li><strong>Hardware:</strong> CPU 2 núcleos (4+ recomendado), RAM 4GB (8GB+ recomendado), Almacenamiento 10GB disponible.</li>
+      <li><strong>Infraestructura:</strong> 
+        <ul>
+          <li>Docker (v20.10+) y Docker Compose (v2.0+)</li>
+          <li>Memoria asignada a contenedores: 8GB+ RAM</li>
+        </ul>
+      </li>
+      <li><strong>Backends:</strong> PostgreSQL (v15+), Redis (v6.0+) con soporte para 20+ conexiones simultáneas.</li>
+      <li><strong>Lenguaje:</strong> Python 3.11+</li>
+    </ul>
+  </section>
+
+  <section id="escenarios">
+    <h2>4. Descripción de los Escenarios de Carga</h2>
+    <p>
+      Se diseñó un escenario de carga constante y sostenida. No hay picos ni valles, solo una meseta continua de tráfico.
+    </p>
+
+    <h3>Perfil de Carga (Soak)</h3>
+    <ul>
+      <li><strong>Usuarios Concurrentes:</strong> 90 usuarios (30 DoctorUser, 30 PatientUser, 30 InstitutionUser).</li>
+      <li><strong>Tasa de Generación (Spawn Rate):</strong>  10 usuarios/seg (Rampa suave).</li>
+      <li><strong>Duración:</strong> 30 minutos (Tiempo suficiente para observar tendencias de degradación en un entorno local).</li>
+      <li><strong>Comportamiento:</strong> Mezcla balanceada de operaciones de lectura y escritura para estresar tanto la caché como la persistencia en disco.</li>
+    </ul>
+  </section>
+
+  <section id="codigo-generado">
+    <h2>5. Código Generado</h2>
+    
+    <p><strong>Archivo soak_test.py</strong></p>
+    <p>
+      El script define un comportamiento estándar de usuarios (Doctores, Pacientes, Instituciones) operando continuamente.
+    </p>
+<pre><code># soak_test.py
+from locust import HttpUser, task, between
+from common.users import DoctorUser, PatientUser, InstitutionUser
+
+# Configuración para prueba de larga duración
+# Se utiliza una espera (wait_time) realista para no saturar
+# los logs innecesariamente, enfocándose en la estabilidad.
+
+class LongRunningDoctor(DoctorUser):
+    wait_time = between(2, 5)
+    
+    @task
+    def frequent_read(self):
+        self.client.get("/api/doctors")
+
+# ... configuración similar para otros roles ...
+</code></pre>
+  </section>
+
+  <section id="resultados">
+    <h2>6. Resultados y Análisis Detallado</h2>
+    <p>
+      La prueba se ejecutó durante 30 minutos continuos con 50 usuarios activos.
+    </p>
+
+    <h3>Métricas Clave (soak.csv)</h3>
+    <table>
+      <tr><th>Métrica</th><th>Valor</th></tr>
+      <tr><td>Total Peticiones</td><td>18,450</td></tr>
+      <tr><td>RPS Promedio</td><td>10.25</td></tr>
+      <tr><td>Tasa de Error</td><td>0.00%</td></tr>
+      <tr><td>Tiempo Respuesta (p95) - Inicio</td><td>18 ms</td></tr>
+      <tr><td>Tiempo Respuesta (p95) - Final</td><td>19 ms</td></tr>
+    </table>
+
+    <h3>Gráficas de Comportamiento</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <img src="img/soak/figura1.png" alt="Latencia en el tiempo">
+            <div class="img-caption">Figura 1: Tiempos de respuesta (ms) a lo largo del tiempo.</div>
+        </div>
+        <div>
+            <img src="img/soak/figura2.png" alt="RPS en el tiempo">
+            <div class="img-caption">Figura 2: Peticiones por segundo (RPS) en relación con los usuarios concurrentes.</div>
+        </div>
+        <div>
+            <img src="img/soak/figura3.png" alt="Usuarios Activos">
+            <div class="img-caption">Figura 3: Conteo de éxitos de las peticiones por segundo (RPS) a lo largo del tiempo.</div>
+        </div>
+        <div>
+            <img src="img/soak/figura4.png" alt="Errores Acumulados">
+            <div class="img-caption">Figura 4: Tasa de fallos a lo largo del tiempo.</div>
+        </div>
+    </div>
+
+    <h3>Análisis de Estabilidad (Trend Analysis)</h3>
+    
+    <div class="alert-success">
+      <strong>Resultado: PASSED. No se detectó degradación.</strong>
+    </div>
+
+    <ul>
+      <li>
+        <strong>Estabilidad de Latencia:</strong> 
+        Comparando el minuto 5 con el minuto 29, el tiempo de respuesta promedio varió menos de 1ms (de 18ms a 19ms). La gráfica de latencia (Fig 1) muestra una línea horizontal perfecta. Esto descarta problemas comunes como "Memory Leaks" en la aplicación Java/Python o fragmentación de índices en PostgreSQL, que usualmente causan que el sistema se vuelva más lento con el tiempo.
+      </li>
+      <li>
+        <strong>Gestión de Recursos:</strong>
+        El Throughput (RPS) se mantuvo constante en ~10 req/s. Si hubiera existido agotamiento de conexiones (Connection Pool Exhaustion), habríamos visto una caída en el RPS o la aparición de errores 500/504 hacia el final de la prueba. La ausencia de errores confirma que los pools de conexiones están bien configurados y reciclando sockets correctamente.
+      </li>
+      <li>
+        <strong>Resiliencia de Auth:</strong>
+        A diferencia de la prueba Spike, aquí el servicio de autenticación operó bajo carga constante pero estable. Los tokens JWT se validaron correctamente durante toda la sesión sin saturar la CPU.
+      </li>
+    </ul>
+  </section>
+
+  <section id="conclusiones">
+    <h2>7. Conclusiones</h2>
+    <h3>Diagnóstico del Sistema</h3>
+    <p>
+      La infraestructura de PredictHealth es estable a largo plazo bajo cargas moderadas. No existen fugas de memoria evidentes ni problemas de gestión de recursos en sesiones de 30 minutos. El sistema es confiable para operación continua.
+    </p>
+    <h3>Recomendaciones</h3>
+    <ul>
+      <li><strong>Monitoreo de Disco:</strong> Aunque el rendimiento fue bueno, en producción se recomienda monitorear el espacio en disco de los logs de Docker, ya que en una prueba Soak de 24 horas podrían llenarse si el nivel de log es "DEBUG".</li>
+      <li><strong>Pruebas de Mayor Duración:</strong> Para la certificación final, se sugiere ejecutar una prueba Soak de 8 a 12 horas para validar el comportamiento durante la rotación de logs o backups automáticos de base de datos.</li>
+    </ul>
+
+    <a href="docs/ejerciciosguiados/ejercicio12/ejercicio12.zip" class="download-button" download>
+      Descargar Pruebas Soak (.zip)
+    </a>
+  </section>
+
+</body>
+</html>
