@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio Guiado 15: Buckets en GCP</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; max-width: 950px; margin: 2rem auto; padding: 2rem; background: #f9f9f9; color: #333; line-height: 1.6; }
+    h1 { text-align: center; color: #333; border-bottom: 3px solid #ddd; padding-bottom: 1rem; }
+    h2 { border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 3rem; color: #2c3e50; }
+    h3 { color: #0056b3; margin-top: 2rem; font-weight: 600; }
+    section { background: #fff; padding: 2.5rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    ul, ol { margin-left: 20px; }
+    li { margin-bottom: 8px; }
+    
+    /* Estilos de Código */
+    pre { background: #1e1e1e; color: #dcdcdc; padding: 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; border-left: 5px solid #0056b3; margin-top: 1rem; }
+    code { font-family: "Consolas", "Monaco", monospace; }
+    .tech-block { background-color: #f1f8ff; padding: 15px; border-radius: 5px; border: 1px solid #cce5ff; font-family: monospace; margin-bottom: 1rem; }
+
+    /* Imágenes */
+    img { max-width: 100%; border: 1px solid #e1e1e1; border-radius: 6px; margin: 1rem auto; display: block; }
+    .img-caption { text-align: center; font-size: 0.85rem; color: #666; font-style: italic; margin-bottom: 2rem; }
+
+    /* Botón de descarga */
+    .download-button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: #ffffff;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      text-align: center;
+      transition: background-color 0.3s;
+      margin-top: 1rem;
+    }
+    .download-button:hover {
+      background-color: #004a99;
+      text-decoration: none;
+      color: #fff;
+    }
+    a.back { text-decoration: none; color: #666; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back">&larr; Regresar</a>
+  
+  <h1>Ejercicio Guiado 15: Integración Básica con Cloud Storage (GCP)</h1>
+
+  <section id="introduccion">
+    <h2>1. Introducción</h2>
+    <p>
+      En el desarrollo de aplicaciones modernas, el almacenamiento de archivos estáticos (imágenes, documentos, vídeos) no debe realizarse en el sistema de archivos del servidor, ya que esto dificulta el escalado horizontal.
+    </p>
+    <p>
+      En este ejercicio, implementamos un microservicio "standalone" utilizando <strong>Flask</strong> y <strong>Google Cloud Platform (GCP)</strong>. 
+      El objetivo es desacoplar el almacenamiento: las imágenes se guardan en un <strong>Bucket de Objetos</strong> en la nube, mientras que la base de datos relacional (MySQL) solo almacena la referencia (URL pública) y los metadatos.
+    </p>
+  </section>
+
+  <section id="objetivos">
+    <h2>2. Objetivos del Ejercicio</h2>
+    <ul>
+      <li><strong>Aprovisionamiento Cloud:</strong> Configurar un Bucket en Google Cloud Storage y generar las credenciales de servicio (Service Account) con permisos de escritura.</li>
+      <li><strong>Integración de SDK:</strong> Implementar la librería <code>google-cloud-storage</code> en Python para comunicar el backend con la nube.</li>
+      <li><strong>Persistencia Híbrida:</strong> Lograr que una sola transacción guarde el archivo en la nube y su registro correspondiente en la base de datos local.</li>
+    </ul>
+  </section>
+
+  <section id="desarrollo">
+    <h2>3. Desarrollo e Implementación</h2>
+    
+    <h3>Fase 1: Configuración en GCP</h3>
+    <p>
+      Se creó un proyecto en Google Cloud Platform y se habilitó la API de Cloud Storage. 
+      Para permitir que nuestro script de Python acceda al bucket de forma segura, generamos una <strong>Service Account Key</strong> (archivo JSON), evitando así hardcodear usuarios y contraseñas.
+    </p>
+    <img src="gcp_bucket_config.png" alt="Configuración del Bucket en GCP">
+    <div class="img-caption">Fig 1. Creación del Bucket y configuración de permisos IAM.</div>
+
+    <h3>Fase 2: Base de Datos (Metadatos)</h3>
+    <p>
+      Se diseñó una tabla simple en MySQL para llevar el control de los archivos subidos.
+    </p>
+    <div class="tech-block">
+      <strong>Script:</strong> <code>images.sql</code><br>
+      Define la tabla <code>images</code> con campos para el ID, la URL pública de GCP y la fecha de subida.
+    </div>
+
+    <h3>Fase 3: Código del Microservicio (app.py)</h3>
+    <p>
+      El núcleo del ejercicio es el archivo <code>app.py</code>. Utiliza la librería <code>python-dotenv</code> para cargar las variables de entorno sensibles.
+      A continuación se muestra el fragmento clave donde ocurre la "magia" de la subida al bucket:
+    </p>
+
+<pre><code># Fragmento de app.py - Lógica de Subida
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    
+    file = request.files['image']
+    
+    # 1. Conexión al Bucket de GCP
+    client = storage.Client.from_service_account_json(GOOGLE_APPLICATION_CREDENTIALS)
+    bucket = client.get_bucket(BUCKET_NAME)
+    
+    # 2. Subida del archivo (Blob)
+    blob = bucket.blob(file.filename)
+    blob.upload_from_file(file)
+    
+    # 3. Guardado de referencia en MySQL
+    cursor.execute("INSERT INTO images (image_url) VALUES (%s)", (blob.public_url,))
+    db.commit()
+    
+    return jsonify({'message': 'File uploaded successfully', 'url': blob.public_url}), 201
+</code></pre>
+  </section>
+
+  <section id="resultados">
+    <h2>4. Resultados y Evidencia</h2>
+    <p>
+      Tras ejecutar el servidor Flask, realizamos pruebas de carga de imágenes. El flujo funcionó correctamente, devolviendo la URL pública generada por Google.
+    </p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+      <div>
+        <h4>1. Petición al Microservicio</h4>
+        <img src="postman_upload.png" alt="Prueba de subida">
+        <div class="img-caption">Respuesta exitosa con URL pública.</div>
+      </div>
+      <div>
+        <h4>2. Persistencia en BD</h4>
+        <img src="db_evidence.png" alt="Registro en MySQL">
+        <div class="img-caption">La URL se guardó en la tabla 'images'.</div>
+      </div>
+    </div>
+
+    <h4>3. Almacenamiento en Nube</h4>
+    <p>Verificación final en la consola de Google Cloud Storage:</p>
+    <img src="bucket_evidence.png" alt="Evidencia en Bucket GCP">
+    <div class="img-caption">Fig 2. El archivo aparece listado correctamente en el Bucket remoto.</div>
+  </section>
+
+  <section id="conclusiones">
+    <h2>5. Conclusiones</h2>
+    <p>
+      Este ejercicio demuestra cómo externalizar el almacenamiento de archivos en una arquitectura de microservicios. 
+      Utilizar Buckets (GCP S3) en lugar de carpetas locales ofrece ventajas críticas: 
+      <strong>escalabilidad infinita</strong> (no se llena el disco del servidor), <strong>seguridad</strong> (URLs firmadas o públicas controladas) y <strong>rendimiento</strong> (los archivos se sirven directamente desde la infraestructura de Google, reduciendo la carga en nuestro backend Flask).
+    </p>
+
+    <a href="docs/ejerciciosguiados/ejercicio15/ejercicio15.zip" class="download-button" download>
+      Descargar Código Fuente (.zip)
+    </a>
+  </section>
+
+</body>
+</html>
