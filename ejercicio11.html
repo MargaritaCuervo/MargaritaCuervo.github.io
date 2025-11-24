@@ -177,6 +177,11 @@ class DoubleWaveShape(LoadTestShape):
       La prueba tuvo una duración de 4 minutos. El sistema fue sometido a un estrés de 10x su carga normal en cuestión de segundos.
     </p>
 
+    <h3>Comandos de Ejecución</h3>
+<pre><code># Ejecución en terminal:
+locust -f shape_spike_test.py --headless --shape-class CustomShape -E smoke
+</code></pre>
+
     <h3>Métricas Clave (shape_spike.csv)</h3>
     <table>
       <tr><th>Métrica</th><th>Valor</th></tr>
