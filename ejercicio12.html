@@ -160,6 +160,10 @@ import common.reporting
       La prueba se ejecutó durante 30 minutos continuos con <strong>90 usuarios activos</strong>.
     </p>
 
+    <h3>Comandos de Ejecución</h3>
+<pre><code># Ejecución en terminal:
+DOCTORS=30 PATIENTS=30 INSTITUTIONS=30 locust -f soak_test.py --headless -u 90 -r 10 --run-time 30m -E smoke</code></pre>
+
     <h3>Métricas Clave (Resultados de soak.csv)</h3>
     <table>
       <tr><th>Métrica</th><th>Valor</th></tr>
