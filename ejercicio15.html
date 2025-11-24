@@ -47,7 +47,7 @@
 
   <a href="index.html" class="back">&larr; Regresar</a>
   
-  <h1>Ejercicio Guiado 15: Integración Básica con Cloud Storage (GCP)</h1>
+  <h1>Ejercicio Guiado 15: Ejercicio Guiado de Buckets Simple</h1>
 
   <section id="introduccion">
     <h2>1. Introducción</h2>
@@ -77,17 +77,43 @@
       Se creó un proyecto en Google Cloud Platform y se habilitó la API de Cloud Storage. 
       Para permitir que nuestro script de Python acceda al bucket de forma segura, generamos una <strong>Service Account Key</strong> (archivo JSON), evitando así hardcodear usuarios y contraseñas.
     </p>
-    <img src="gcp_bucket_config.png" alt="Configuración del Bucket en GCP">
+    <img src="/img/bucketsimple/config.png" alt="Configuración del Bucket en GCP">
     <div class="img-caption">Fig 1. Creación del Bucket y configuración de permisos IAM.</div>
 
     <h3>Fase 2: Base de Datos (Metadatos)</h3>
     <p>
-      Se diseñó una tabla simple en MySQL para llevar el control de los archivos subidos.
+      Se diseñó una tabla simple en MySQL para llevar el control de los archivos subidos. Aqui se define la tabla images con campos para el ID, la URL pública de GCP y la fecha de subida.
     </p>
-    <div class="tech-block">
-      <strong>Script:</strong> <code>images.sql</code><br>
-      Define la tabla <code>images</code> con campos para el ID, la URL pública de GCP y la fecha de subida.
-    </div>
+    <pre><code># Fragmento de images.sql
+DROP TABLE IF EXISTS `images`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `images` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `filename` varchar(255) NOT NULL,
+  `upload_date` datetime NOT NULL,
+  `file_size` bigint(20) NOT NULL,
+  `mime_type` varchar(100) NOT NULL,
+  `url` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `filename` (`filename`),
+  KEY `idx_upload_date` (`upload_date`),
+  KEY `idx_filename` (`filename`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `images`
+--
+
+LOCK TABLES `images` WRITE;
+/*!40000 ALTER TABLE `images` DISABLE KEYS */;
+INSERT INTO `images` VALUES (2,'20251103_171644_libro.jpeg','2025-11-03 17:16:44',12069,'image/jpeg','https://storage.googleapis.com/margarita-images/20251103_171644_libro.jpeg?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=flask-images-service%40integracion-468300.iam.gserviceaccount.com%2F20251103%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20251103T171644Z&X-Goog-Expires=3600&X-Goog-SignedHeaders=host&X-Goog-Signature=3588cbb5f561fe93a147e80434dcbb9ef84a1b9573b523675237e354c8b12680f222565fa294fb2e11c9706fc823c0b2808b64e5915ed5a6d4ed0d3e505cfcd024b6da52484887721eb650a31b7099b5d60499b44e26702e4ebe6f01ad5d56fff587ec0e6d5ce90af97377db696ec54430eb4d0fd398938b676d3bc1e5ae03b16081a57ab52edcbb55b16fa9729ff93ea87d91f5e79ed3877dd9dcc930703ea880aa4acfd80ba8b2303ea3014c457c6cab53d3e5181333bf1ab56183682353d09c47453ebda50e7d03d591e218675b2f01eb946fe862cd90bdb3a86cbe034f030e0e402d48febca40a7812125c7881f655a3884f3be1d2dac86209025fce728e','2025-11-03 17:16:44');
+/*!40000 ALTER TABLE `images` ENABLE KEYS */;
+UNLOCK TABLES;
+</code></pre>
 
     <h3>Fase 3: Código del Microservicio (app.py)</h3>
     <p>
@@ -128,19 +154,19 @@ def upload_file():
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
       <div>
         <h4>1. Petición al Microservicio</h4>
-        <img src="postman_upload.png" alt="Prueba de subida">
+        <img src="/img/bucketsimple/postman_upload.png" alt="Prueba de subida">
         <div class="img-caption">Respuesta exitosa con URL pública.</div>
       </div>
       <div>
         <h4>2. Persistencia en BD</h4>
-        <img src="db_evidence.png" alt="Registro en MySQL">
+        <img src="/img/bucketsimple/db_evidence.png" alt="Registro en MySQL">
         <div class="img-caption">La URL se guardó en la tabla 'images'.</div>
       </div>
     </div>
 
     <h4>3. Almacenamiento en Nube</h4>
     <p>Verificación final en la consola de Google Cloud Storage:</p>
-    <img src="bucket_evidence.png" alt="Evidencia en Bucket GCP">
+    <img src="/img/bucketsimple/bucket_evidence.png" alt="Evidencia en Bucket GCP">
     <div class="img-caption">Fig 2. El archivo aparece listado correctamente en el Bucket remoto.</div>
   </section>
 
