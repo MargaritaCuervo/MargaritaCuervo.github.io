@@ -133,22 +133,17 @@ def delete_file_from_bucket(image_url):
     <img src="evidencia_subida_ok.png" alt="Subida exitosa en Postman/Swagger">
     <div class="img-caption">Fig 1. Respuesta exitosa de la API mostrando la 'imagen_url' en GCS.</div>
 
-    <h3>Caso 2: Validación de Tipo de Archivo</h3>
-    <p><strong>Prueba:</strong> Intento de subir un archivo no permitido (ej. documento PDF o ejecutable EXE).</p>
+    <h3>Caso 2 y 3: Validación de Tipo de Archivo y tamaño (>5MB)</h3>
+    <p><strong>Prueba:</strong> Intento de subir un archivo no permitido (ej. documento PDF o ejecutable EXE o mayor a 5  Megabytes).</p>
     <p><strong>Resultado Esperado:</strong> Rechazo inmediato con código 400.</p>
-    <img src="evidencia_error_tipo.png" alt="Error por tipo de archivo inválido">
-    <div class="img-caption">Fig 2. El sistema rechaza archivos que no sean imágenes.</div>
-
-    <h3>Caso 3: Validación de Tamaño (>5MB)</h3>
-    <p><strong>Prueba:</strong> Carga de una imagen de alta resolución superior a 5 Megabytes.</p>
     <p><strong>Resultado Esperado:</strong> Error 413 Payload Too Large.</p>
-    <img src="evidencia_error_size.png" alt="Error por exceso de tamaño">
-    <div class="img-caption">Fig 3. Control de límite de tamaño funcionando correctamente.</div>
+    <img src="img/bucketsbooks/evidencia_error_tipo.png" alt="Error por tipo de archivo inválido o muy pesado">
+    <div class="img-caption">Fig 2. El sistema rechaza archivos que no sean imágenes o superen el limite de tamaño.</div>
 
     <h3>Caso 4: Actualización y Limpieza</h3>
     <p><strong>Prueba:</strong> Actualización de un libro existente reemplazando su portada.</p>
     <p><strong>Validación:</strong> La nueva imagen aparece en el bucket y la anterior es eliminada automáticamente para no generar basura digital.</p>
-    <img src="evidencia_update.png" alt="Actualización de registro">
+    <img src="img/bucketsbooks/evidencia_update.png" alt="Actualización de registro">
     <div class="img-caption">Fig 4. Flujo de actualización exitoso.</div>
   </section>
 
@@ -160,7 +155,7 @@ def delete_file_from_bucket(image_url):
     <div class="alert-info">
       <strong>Acceso a Docs:</strong> <code>http://[IP_VM]:5000/api/docs</code>
     </div>
-    <img src="swagger_evidence.png" alt="Interfaz Swagger UI">
+    <img src="img/bucketsbooks/swagger_evidence.png" alt="Interfaz Swagger UI">
     <div class="img-caption">Fig 5. Documentación interactiva de los endpoints con soporte para carga de archivos.</div>
   </section>
 
