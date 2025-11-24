@@ -177,6 +177,12 @@ import common.reporting
       A continuación se presenta el análisis comparativo. Se ejecutaron ambas pruebas con 150 usuarios concurrentes (50 por rol) durante 5 minutos.
     </p>
 
+    <h3>Comandos de Ejecución</h3>
+<pre><code># Ejecución en terminal:
+ DOCTORS=50 PATIENTS=50 INSTITUTIONS=50 locust -f read_heavy_test.py --headless -u 150 -r 15 --run-time 5m -T read
+
+DOCTORS=20 PATIENTS=20 INSTITUTIONS=20 locust -f write_heavy_test.py --headless -u 60 -r 6 --run-time 5m -T write</code></pre>
+
     <h3>6.1 Escenario A: Read-Heavy (Resultados)</h3>
     <p>El sistema mostró una estabilidad total, procesando casi 3,000 peticiones sin un solo error.</p>
     
