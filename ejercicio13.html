@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio Guiado 13: Pruebas Break-point</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; max-width: 950px; margin: 2rem auto; padding: 2rem; background: #f9f9f9; color: #333; line-height: 1.6; }
+    h1 { text-align: center; color: #333; border-bottom: 3px solid #ddd; padding-bottom: 1rem; }
+    h2 { border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 3rem; color: #2c3e50; }
+    h3 { color: #0056b3; margin-top: 2rem; font-weight: 600; }
+    h4 { color: #444; margin-top: 1.5rem; font-weight: bold; }
+    section { background: #fff; padding: 2.5rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    ul, ol { margin-left: 20px; }
+    li { margin-bottom: 8px; }
+    
+    /* Estilos de Tablas */
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+    th { background-color: #0056b3; color: white; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e9ecef; }
+
+    /* Imágenes */
+    img { max-width: 100%; border: 1px solid #e1e1e1; border-radius: 6px; margin: 1rem auto; display: block; }
+    .img-caption { text-align: center; font-size: 0.85rem; color: #666; font-style: italic; margin-bottom: 2rem; }
+    
+    /* Estilos de Código */
+    pre { background: #1e1e1e; color: #dcdcdc; padding: 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; border-left: 5px solid #0056b3; margin-top: 1rem; }
+    code { font-family: "Consolas", "Monaco", monospace; }
+    .tech-block { background-color: #f1f8ff; padding: 15px; border-radius: 5px; border: 1px solid #cce5ff; font-family: monospace; margin-bottom: 1rem; }
+
+    /* Botón de descarga */
+    .download-button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: #ffffff;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      text-align: center;
+      transition: background-color 0.3s;
+      margin-top: 1rem;
+    }
+    .download-button:hover {
+      background-color: #004a99;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    a.back { text-decoration: none; color: #666; font-weight: bold; }
+    
+    .alert-danger { background-color: #f8d7da; color: #721c24; padding: 1rem; border-radius: 5px; border: 1px solid #f5c6cb; margin-top: 1rem; }
+    .alert-warning { background-color: #fff3cd; color: #856404; padding: 1rem; border-radius: 5px; border: 1px solid #ffeeba; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back">&larr; Regresar</a>
+  
+  <h1>Ejercicio Guiado 13: Pruebas Break-point en Locust</h1>
+
+  <section id="introduccion">
+    <h2>1. Introducción</h2>
+    <p>
+      En este ejercicio ejecutamos una <strong>Prueba de Punto de Quiebre (Breakpoint Test)</strong>. 
+      A diferencia de las pruebas de estrés que validan el funcionamiento bajo una carga alta conocida, el objetivo de esta prueba es aumentar la carga progresivamente y sin límites hasta que el sistema falle.
+    </p>
+    <p>
+      Esta prueba responde a la pregunta crítica: <em>"¿Cuál es el número máximo de usuarios concurrentes que PredictHealth puede soportar antes de colapsar?"</em>. Identificar este límite es vital para la planificación de capacidad y escalado automático.
+    </p>
+  </section>
+
+  <section id="objetivos">
+    <h2>2. Objetivos de la Prueba</h2>
+    <ul>
+      <li>Determinar el límite exacto de usuarios concurrentes del sistema mediante un incremento controlado de carga.</li>
+      <li>Identificar el umbral donde la tasa de errores supera el 5% (SLO) y la latencia se degrada inaceptablemente</li>
+      <li>Validar la capacidad de recuperación del sistema tras alcanzar el punto de fallo</li>
+    </ul>
+  </section>
+
+  <section id="metodologia">
+    <h2>3. Metodología</h2>
+    <h3>Arquitectura del Entorno de Prueba</h3>
+    <p>
+      Las pruebas se ejecutaron desde una máquina local que actuaba como nodo maestro de Locust, generando tráfico HTTP hacia los servicios desplegados. 
+      Los componentes del sistema (CMS y microservicios) estaban corriendo localmente a través de Docker Compose.
+    </p>
+    <div class="tech-block">
+      [Máquina Local (Locust Master)] -> [Red Local (Docker Network)] -> [Contenedores de CMS y Microservicios] -> [Contenedores de PostgreSQL y Redis]
+    </div>
+    
+    <p>Las URLs base configuradas para cada servicio bajo prueba fueron las siguientes:</p>
+    <ul>
+      <li><strong>CMS:</strong> <code>http://localhost:80</code></li>
+      <li><strong>Servicio Auth-JWT:</strong> <code>http://localhost:5000</code></li>
+      <li><strong>Servicio de Instituciones:</strong> <code>http://localhost:5001</code></li>
+      <li><strong>Servicio de Doctores:</strong> <code>http://localhost:5002</code></li>
+      <li><strong>Servicio de Pacientes:</strong> <code>http://localhost:5003</code></li>
+    </ul>
+
+    <h3>Herramientas Utilizadas</h3>
+    <ul>
+      <li><strong>Locust:</strong> Versión 2.41.6</li>
+      <li><strong>Sistema Operativo:</strong> Windows 11</li>
+      <li><strong>Hardware:</strong> CPU 2 núcleos (4+ recomendado), RAM 4GB (8GB+ recomendado), Almacenamiento 10GB disponible.</li>
+      <li><strong>Infraestructura:</strong> 
+        <ul>
+          <li>Docker (v20.10+) y Docker Compose (v2.0+)</li>
+          <li>Memoria asignada a contenedores: 8GB+ RAM</li>
+        </ul>
+      </li>
+      <li><strong>Backends:</strong> PostgreSQL (v15+), Redis (v6.0+) con soporte para 20+ conexiones simultáneas.</li>
+      <li><strong>Lenguaje:</strong> Python 3.11+</li>
+    </ul>
+  </section>
+  
+  <section id="escenarios">
+    <h2>4. Descripción de los Escenarios de Carga</h2>
+    <p>
+      Se utilizó un patrón de carga escalonado ("Step Load") definido en <code>LoadTestShape</code>. 
+      La carga se incrementa en bloques cada minuto para permitir que el sistema se estabilice brevemente antes del siguiente empujón.
+    </p>
+
+    <h3>Fases del Escenario (Stages)</h3>
+    <ol>
+      <li><strong>Fase 1:</strong> 50 usuarios (1 minuto).</li>
+      <li><strong>Fase 2:</strong> 100 usuarios 1 minuto).</li>
+      <li><strong>Fase 3:</strong> 150 usuarios (1 minuto).</li>
+      <li><strong>Fase 4:</strong> 200 usuarios (1 minuto).</li>
+      <li><strong>Fase 5:</strong> 250 usuarios 1 minuto).</li>
+    </ol>
+    <p>Este diseño agresivo busca forzar el fallo del sistema dentro de un periodo no mayor a 10 minutos.</p>
+  </section>
+
+  <section id="codigo-generado">
+    <h2>5. Código Generado</h2>
+    
+    <p><strong>Archivo break_point_test.py</strong></p>
+    <p>
+      El script utiliza la clase <code>LoadTestShape</code> para definir los escalones de carga.
+    </p>
+<pre><code># break_point_test.py
+import math
+from locust import HttpUser, LoadTestShape
+# Importamos tus usuarios reales del proyecto
+from users import DoctorUser, PatientUser, InstitutionUser
+
+try:
+    import reporting
+except ImportError:
+    pass
+
+class StepLoadShape(LoadTestShape):
+    """
+    Prueba de Punto de Quiebre (Break Point):
+    Aumenta la carga en escalones hasta encontrar el límite.
+    """
+    step_time = 60       # Duración de cada escalón (60 segundos)
+    step_users = 50      # Usuarios nuevos por escalón
+    spawn_rate = 5       # Tasa de nacimiento (5 usuarios/seg)
+
+    def tick(self):
+        run_time = self.get_run_time()
+
+        # Calcula en qué escalón vamos (Minuto 1 = Escalón 1, Minuto 2 = Escalón 2...)
+        current_step = math.floor(run_time / self.step_time) + 1
+        
+        # Calcula los usuarios totales para este escalón
+        target_users = current_step * self.step_users
+        
+        # Le dice a Locust cuántos usuarios debe haber ahora
+        return (target_users, self.spawn_rate)
+</code></pre>
+  </section>
+
+  <section id="resultados">
+    <h2>6. Resultados y Análisis Detallado</h2>
+    <p>
+      La prueba se ejecutó hasta alcanzar los 250 usuarios o el fallo del sistema. Los resultados indican un colapso claro del rendimiento.
+    </p>
+
+    <h3>Comandos de Ejecución</h3>
+<pre><code># Ejecución en terminal:
+$env:DOCTORS="10"; $env:PATIENTS="30"; $env:INSTITUTIONS="5"; locust -f break_point_test.py --headless --csv break_point --html break_point.html --host http://localhost:5000</code></pre>
+
+    <h3>Métricas Clave (shape_break.csv)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Escalón (Minuto)</th>
+          <th>Usuarios</th>
+          <th>Comportamiento del Sistema</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>00:00 - 03:00</td>
+          <td>50 - 150</td>
+          <td><strong>Estable.</strong> Tasa de error 0%. Latencia estable.</td>
+        </tr>
+        <tr>
+          <td>03:00 - 04:00</td>
+          <td>200</td>
+          <td><strong>Alerta.</strong> Se observan los primeros signos de lentitud en el Login, pero el sistema resiste.</td>
+        </tr>
+        <tr>
+          <td>04:15</td>
+          <td>250</td>
+          <td><strong>RUPTURA.</strong> En el momento exacto en que la carga sube a 250 usuarios, la tasa de fallos (Failures/s) se dispara verticalmente.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Gráficas de Break-point</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <img src="img/break/figura1.png" alt="Tiempos de respuesta Read">
+            <div class="img-caption">Figura 1: Tiempos de respuesta (ms) a lo largo del tiempo.</div>
+        </div>
+        <div>
+            <img src="img/break/figura2.png" alt="RPS Read">
+            <div class="img-caption">Figura 2: Peticiones por segundo (RPS) en relación con los usuarios concurrentes.</div>
+        </div>
+        <div>
+            <img src="img/break/figura3.png" alt="Éxitos Read">
+            <div class="img-caption">Figura 3: Conteo de éxitos de las peticiones por segundo (RPS) a lo largo del tiempo.</div>
+        </div>
+        <div>
+            <img src="img/break/figura4.png" alt="Fallos Read">
+            <div class="img-caption">Figura 4: Tasa de fallos a lo largo del tiempo.</div>
+        </div>
+    </div>
+
+
+    <h3>Desglose Detallado de Resultados</h3>
+    <div class="alert-danger">
+      <strong>Punto de Quiebre Detectado: 250 Usuarios.</strong>
+    </div>
+
+    <p>
+      Esta prueba fue reveladora y crítica para dimensionar la capacidad real del sistema, demostrando que la infraestructura es robusta en lectura pero mucho más frágil de lo estimado en procesos de autenticación.
+    </p>
+
+    <h4>Objetivo 1 (Determinar Capacidad Máxima):</h4>
+    <p>
+      El sistema demostró una estabilidad perfecta en los primeros escalones. 
+      Durante los primeros 3 minutos (cargas de 50, 100 y 150 usuarios), el sistema operó sin contratiempos, manteniendo una latencia baja y una tasa de error del 0%.
+      Sin embargo, la capacidad máxima real se identificó en 250 usuarios concurrentes. Al intentar cruzar este umbral en el minuto 04:15, el sistema dejó de ser capaz de procesar nuevas peticiones de entrada.
+    </p>
+
+    <h4>Objetivo 2 (Identificar Umbral de Fallo):</h4>
+    <p>
+      La Figura 4 (Failures over time) ilustra gráficamente el momento exacto de la ruptura.
+      La línea de fallos se mantiene completamente plana (en cero) durante las fases iniciales. 
+      En el momento exacto en que la carga sube a 250 usuarios, se observa un "muro" vertical de errores. La tasa de fallos pasa instantáneamente de 0 a >20 errores por segundo.
+      Esto indica que el fallo no fue gradual (degradación lenta), sino catastrófico (bloqueo total) al saturarse la cola de conexiones.
+    </p>
+
+    <h4>Objetivo 3 (Localizar Servicio Limitante):</h4>
+    <p>
+      El análisis de los logs y tipos de error (Timeouts y 503 Service Unavailable) apunta directamente al Microservicio de Autenticación (Auth-Service).
+      Mientras que el API Gateway seguía intentando enrutar tráfico, el contenedor de Auth dejó de responder.
+    </p>
+
+    <div class="alert-warning">
+      <strong>Diagnóstico:</strong> El cuello de botella es computacional. El contenedor de autenticación no tiene suficientes recursos de CPU asignados o suficientes réplicas para procesar más de 200 solicitudes simultáneas de hashing de contraseñas (bcrypt).
+    </div>
+  </section>
+
+  <section id="conclusiones">
+    <h2>7. Conclusiones</h2>
+    <h3>Diagnóstico de Capacidad</h3>
+    <p>
+      El sistema <strong>PredictHealth</strong> tiene un límite duro de <strong>250 usuarios concurrentes</strong>. 
+      La ruptura del servicio es abrupta y catastrófica, no gradual. Esto representa un riesgo alto para la estabilidad en producción si no se gestiona, ya que un pico repentino podría dejar fuera de servicio el sistema completo.
+    </p>
+    <p>
+      La causa raíz ha sido aislada: <strong>Falta de escalado horizontal en el servicio crítico de escritura (Auth)</strong>.
+    </p>
+
+    <h3>Recomendaciones Urgentes</h3>
+    <ul>
+      <li><strong>Escalado Horizontal (Mandatorio):</strong> Es imperativo aumentar las réplicas del servicio de Autenticación antes de salir a producción. Se recomienda iniciar con al menos 3 réplicas balanceadas.</li>
+      <li><strong>Gestión de Recursos:</strong> Revisar y aumentar los límites de CPU asignados al contenedor de Auth en el archivo `docker-compose` o la configuración de Kubernetes.</li>
+    </ul>
+
+    <a href="docs/ejerciciosguiados/ejercicio13/ejercicio13.zip" class="download-button" download>
+      Descargar Pruebas Break-point (.zip)
+    </a>
+  </section>
+
+</body>
+</html>
