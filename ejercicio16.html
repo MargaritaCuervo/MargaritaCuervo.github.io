@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio Guiado 16: Microservicio Books con Buckets</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; max-width: 950px; margin: 2rem auto; padding: 2rem; background: #f9f9f9; color: #333; line-height: 1.6; }
+    h1 { text-align: center; color: #333; border-bottom: 3px solid #ddd; padding-bottom: 1rem; }
+    h2 { border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 3rem; color: #2c3e50; }
+    h3 { color: #0056b3; margin-top: 2rem; font-weight: 600; }
+    h4 { color: #444; margin-top: 1.5rem; font-weight: bold; }
+    section { background: #fff; padding: 2.5rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    ul, ol { margin-left: 20px; }
+    li { margin-bottom: 8px; }
+    
+    /* Estilos de Tablas */
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+    th { background-color: #0056b3; color: white; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e9ecef; }
+
+    /* Imágenes */
+    img { max-width: 100%; border: 1px solid #e1e1e1; border-radius: 6px; margin: 1rem auto; display: block; }
+    .img-caption { text-align: center; font-size: 0.85rem; color: #666; font-style: italic; margin-bottom: 2rem; }
+    
+    /* Estilos de Código */
+    pre { background: #1e1e1e; color: #dcdcdc; padding: 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; border-left: 5px solid #0056b3; margin-top: 1rem; }
+    code { font-family: "Consolas", "Monaco", monospace; }
+    .tech-block { background-color: #f1f8ff; padding: 15px; border-radius: 5px; border: 1px solid #cce5ff; font-family: monospace; margin-bottom: 1rem; }
+
+    /* Botón de descarga */
+    .download-button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: #ffffff;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      text-align: center;
+      transition: background-color 0.3s;
+      margin-top: 1rem;
+    }
+    .download-button:hover {
+      background-color: #004a99;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    a.back { text-decoration: none; color: #666; font-weight: bold; }
+    
+    .alert-success { background-color: #d4edda; color: #155724; padding: 1rem; border-radius: 5px; border: 1px solid #c3e6cb; margin-top: 1rem; }
+    .alert-info { background-color: #d1ecf1; color: #0c5460; padding: 1rem; border-radius: 5px; border: 1px solid #bee5eb; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back">&larr; Regresar</a>
+  
+  <h1>Ejercicio Guiado 16: Microservicio Books con Buckets</h1>
+
+  <section id="introduccion">
+    <h2>1. Introducción</h2>
+    <p>
+      En este ejercicio evolucionamos el microservicio de gestión de libros (Books). Previamente, este servicio ya contaba con autenticación segura (JWT) y caché de alto rendimiento (Redis). 
+      El nuevo requerimiento consistió en integrar capacidades de almacenamiento en la nube (Google Cloud Storage) para permitir la carga, visualización y actualización de las portadas de los libros.
+    </p>
+    <p>
+      Esta integración transforma la aplicación en una solución completa, desacoplando el almacenamiento de archivos estáticos de la base de datos relacional.
+    </p>
+  </section>
+
+  <section id="objetivos">
+    <h2>2. Objetivos del Ejercicio</h2>
+    <ul>
+      <li><strong>Integración Cloud Storage:</strong> Implementar la carga de archivos al bucket de GCP desde el backend Flask.</li>
+      <li><strong>Validaciones de Seguridad:</strong> Asegurar que solo se suban archivos de imagen permitidos y que no excedan el tamaño máximo (5MB).</li>
+      <li><strong>Gestión de Ciclo de Vida:</strong> Implementar lógica para eliminar imágenes obsoletas del bucket cuando se actualiza o borra un libro.</li>
+      <li><strong>Documentación API:</strong> Exponer los nuevos endpoints a través de Swagger UI.</li>
+    </ul>
+  </section>
+
+  <section id="implementacion">
+    <h2>3. Implementación Técnica</h2>
+    
+    <h3>Modificación de Base de Datos</h3>
+    <p>
+      Se actualizó el esquema de la base de datos MySQL mediante el script <code>LibrosBucket.sql</code> para incluir la referencia a la imagen remota.
+    </p>
+<pre><code>-- Fragmento LibrosBucket.sql
+CREATE TABLE IF NOT EXISTS libros (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    isbn VARCHAR(20) NOT NULL UNIQUE,
+    titulo VARCHAR(255) NOT NULL,
+    -- Se agrega campo para la URL pública del bucket
+    imagen_url VARCHAR(255),
+    ...
+);</code></pre>
+
+    <h3>Lógica de Negocio (app.py)</h3>
+    <p>
+      El backend se robusteció con funciones para validar extensiones y gestionar la comunicación con GCP.
+    </p>
+<pre><code># Fragmento app.py - Validaciones y Subida
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # Límite 5MB
+
+def upload_file_to_bucket(file, filename):
+    bucket = storage_client.bucket(app.config['BUCKET_NAME'])
+    blob = bucket.blob(filename)
+    blob.upload_from_file(file)
+    return blob.public_url
+
+def delete_file_from_bucket(image_url):
+    # Lógica para extraer el nombre del archivo y eliminarlo
+    filename = image_url.split('/')[-1]
+    blob = bucket.blob(filename)
+    blob.delete()
+</code></pre>
+  </section>
+
+  <section id="pruebas">
+    <h2>4. Casos de Prueba y Resultados</h2>
+    <p>
+      Se realizaron pruebas exhaustivas para validar los criterios de aceptación definidos. A continuación se presenta la evidencia gráfica.
+    </p>
+
+    <h3>Caso 1: Subida Exitosa</h3>
+    <p><strong>Prueba:</strong> Carga de un libro nuevo con portada en formato JPG válida.</p>
+    <p><strong>Resultado Esperado:</strong> Código 201 Created y URL de imagen generada.</p>
+    <img src="evidencia_subida_ok.png" alt="Subida exitosa en Postman/Swagger">
+    <div class="img-caption">Fig 1. Respuesta exitosa de la API mostrando la 'imagen_url' en GCS.</div>
+
+    <h3>Caso 2: Validación de Tipo de Archivo</h3>
+    <p><strong>Prueba:</strong> Intento de subir un archivo no permitido (ej. documento PDF o ejecutable EXE).</p>
+    <p><strong>Resultado Esperado:</strong> Rechazo inmediato con código 400.</p>
+    <img src="evidencia_error_tipo.png" alt="Error por tipo de archivo inválido">
+    <div class="img-caption">Fig 2. El sistema rechaza archivos que no sean imágenes.</div>
+
+    <h3>Caso 3: Validación de Tamaño (>5MB)</h3>
+    <p><strong>Prueba:</strong> Carga de una imagen de alta resolución superior a 5 Megabytes.</p>
+    <p><strong>Resultado Esperado:</strong> Error 413 Payload Too Large.</p>
+    <img src="evidencia_error_size.png" alt="Error por exceso de tamaño">
+    <div class="img-caption">Fig 3. Control de límite de tamaño funcionando correctamente.</div>
+
+    <h3>Caso 4: Actualización y Limpieza</h3>
+    <p><strong>Prueba:</strong> Actualización de un libro existente reemplazando su portada.</p>
+    <p><strong>Validación:</strong> La nueva imagen aparece en el bucket y la anterior es eliminada automáticamente para no generar basura digital.</p>
+    <img src="evidencia_update.png" alt="Actualización de registro">
+    <div class="img-caption">Fig 4. Flujo de actualización exitoso.</div>
+  </section>
+
+  <section id="documentacion">
+    <h2>5. Documentación API (Swagger)</h2>
+    <p>
+      Para facilitar el consumo del microservicio, se habilitó la documentación interactiva mediante Swagger UI.
+    </p>
+    <div class="alert-info">
+      <strong>Acceso a Docs:</strong> <code>http://[IP_VM]:5000/api/docs</code>
+    </div>
+    <img src="swagger_evidence.png" alt="Interfaz Swagger UI">
+    <div class="img-caption">Fig 5. Documentación interactiva de los endpoints con soporte para carga de archivos.</div>
+  </section>
+
+  <section id="conclusiones">
+    <h2>6. Conclusiones</h2>
+    <p>
+      La integración de Buckets en el microservicio de Books ha sido exitosa. El sistema ahora es capaz de gestionar contenido multimedia de forma eficiente y segura, cumpliendo con todas las reglas de validación de negocio (tamaño y tipo) y manteniendo la base de datos ligera al almacenar solo referencias URL.
+    </p>
+
+    <a href="docs/ejerciciosguiados/ejercicio16/ejercicio16.zip" class="download-button" download>
+      Descargar Código Fuente (.zip)
+    </a>
+  </section>
+
+</body>
+</html>
